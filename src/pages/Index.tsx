@@ -3,6 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import LearningPath from '@/components/LearningPath';
+import AnimatedKatya from '@/components/AnimatedKatya';
 import { 
   Home, 
   MessageCircle, 
@@ -11,18 +13,30 @@ import {
   Target,
   Flame,
   Trophy,
-  Star,
   Heart,
-  BookOpen,
   Calendar
 } from 'lucide-react';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'checkin' | 'chat' | 'group' | 'videos'>('home');
-  const [streak, setStreak] = useState(7);
-  const [level, setLevel] = useState(3);
-  const [xp, setXp] = useState(450);
-  const [nextLevelXP, setNextLevelXP] = useState(600);
+  const [streak] = useState(7);
+  const [level] = useState(3);
+  const [xp] = useState(450);
+  const [nextLevelXP] = useState(600);
+
+  const lessons = [
+    { id: '1', title: 'Что такое личные границы?', status: 'completed' as const, xp: 50 },
+    { id: '2', title: 'Признаки нарушенных границ', status: 'completed' as const, xp: 50 },
+    { id: '3', title: 'Как говорить "нет"', status: 'current' as const, xp: 50 },
+    { id: '4', title: 'Границы в семье', status: 'available' as const, xp: 50 },
+    { id: '5', title: 'Границы с друзьями', status: 'locked' as const, xp: 50 },
+    { id: '6', title: 'Цифровые границы', status: 'locked' as const, xp: 50 },
+    { id: '7', title: 'Эмоциональные границы', status: 'locked' as const, xp: 50 },
+    { id: '8', title: 'Практика в реальной жизни', status: 'locked' as const, xp: 75 },
+    { id: '9', title: 'Итоговый тест', status: 'locked' as const, xp: 100 },
+  ];
+
+  const currentLessonIndex = lessons.findIndex(l => l.status === 'current');
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 pb-20">
@@ -52,139 +66,17 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-4xl mx-auto">
         {activeTab === 'home' && (
-          <>
-            {/* Психолог Катя - Персонаж */}
-            <Card className="bg-gradient-to-br from-purple-500 to-pink-500 border-0 overflow-hidden">
-              <div className="p-6 text-white relative">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Star className="w-5 h-5" fill="currentColor" />
-                      <span className="text-sm font-medium">Психолог Катя</span>
-                    </div>
-                    <h2 className="text-2xl font-bold mb-2">
-                      Привет! Готов(а) учиться новому? 🎯
-                    </h2>
-                    <p className="text-sm opacity-90 mb-4">
-                      Сегодня у тебя новый урок. Давай разберём, как строить здоровые границы с друзьями!
-                    </p>
-                    <Button className="bg-white text-purple-600 hover:bg-gray-100">
-                      Начать урок
-                    </Button>
-                  </div>
-                  <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
-                    <Heart className="w-12 h-12 text-white" />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Прогресс */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-gray-900">Твой прогресс</h3>
-                <span className="text-sm text-gray-500">{xp} / {nextLevelXP} XP</span>
-              </div>
-              <Progress value={(xp / nextLevelXP) * 100} className="h-3 mb-2" />
-              <p className="text-xs text-gray-500">Ещё {nextLevelXP - xp} XP до уровня {level + 1}</p>
-            </Card>
-
-            {/* Колесо баланса */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Target className="w-5 h-5 text-purple-600" />
-                <h3 className="font-bold text-gray-900">Колесо баланса</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                  <div className="text-2xl mb-1">👨‍👩‍👧</div>
-                  <p className="text-sm font-medium text-gray-700">Семья</p>
-                  <div className="flex items-center gap-1 mt-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className={`w-2 h-2 rounded-full ${i < 3 ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    ))}
-                  </div>
-                </div>
-                <div className="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-                  <div className="text-2xl mb-1">👫</div>
-                  <p className="text-sm font-medium text-gray-700">Друзья</p>
-                  <div className="flex items-center gap-1 mt-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className={`w-2 h-2 rounded-full ${i < 4 ? 'bg-blue-500' : 'bg-gray-300'}`} />
-                    ))}
-                  </div>
-                </div>
-                <div className="p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
-                  <div className="text-2xl mb-1">📚</div>
-                  <p className="text-sm font-medium text-gray-700">Учёба</p>
-                  <div className="flex items-center gap-1 mt-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className={`w-2 h-2 rounded-full ${i < 2 ? 'bg-purple-500' : 'bg-gray-300'}`} />
-                    ))}
-                  </div>
-                </div>
-                <div className="p-4 bg-pink-50 rounded-xl border-2 border-pink-200">
-                  <div className="text-2xl mb-1">💝</div>
-                  <p className="text-sm font-medium text-gray-700">Любовь</p>
-                  <div className="flex items-center gap-1 mt-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className={`w-2 h-2 rounded-full ${i < 1 ? 'bg-pink-500' : 'bg-gray-300'}`} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <Button className="w-full mt-4" variant="outline">
-                Обновить баланс
-              </Button>
-            </Card>
-
-            {/* Уроки недели */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900">Уроки этой недели</h3>
-                <Badge variant="secondary">Неделя 1</Badge>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { title: 'Что такое личные границы?', status: 'completed', xp: 50 },
-                  { title: 'Признаки нарушенных границ', status: 'completed', xp: 50 },
-                  { title: 'Как говорить "нет"', status: 'current', xp: 50 },
-                  { title: 'Границы в семье', status: 'locked', xp: 50 },
-                ].map((lesson, idx) => (
-                  <div key={idx} className={`p-4 rounded-xl border-2 flex items-center justify-between ${
-                    lesson.status === 'completed' ? 'bg-green-50 border-green-200' :
-                    lesson.status === 'current' ? 'bg-yellow-50 border-yellow-200' :
-                    'bg-gray-50 border-gray-200'
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        lesson.status === 'completed' ? 'bg-green-500' :
-                        lesson.status === 'current' ? 'bg-yellow-500' :
-                        'bg-gray-400'
-                      }`}>
-                        {lesson.status === 'completed' ? (
-                          <Star className="w-5 h-5 text-white" fill="currentColor" />
-                        ) : lesson.status === 'current' ? (
-                          <BookOpen className="w-5 h-5 text-white" />
-                        ) : (
-                          <span className="text-white text-lg">🔒</span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm text-gray-900">{lesson.title}</p>
-                        <p className="text-xs text-gray-500">+{lesson.xp} XP</p>
-                      </div>
-                    </div>
-                    {lesson.status === 'current' && (
-                      <Button size="sm">Начать</Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </>
+          <LearningPath
+            lessons={lessons}
+            currentLessonIndex={currentLessonIndex}
+            onLessonStart={(lessonId) => {
+              console.log('Starting lesson:', lessonId);
+              // TODO: Navigate to lesson
+            }}
+            weekNumber={1}
+          />
         )}
 
         {activeTab === 'checkin' && (
