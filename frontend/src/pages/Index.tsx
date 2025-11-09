@@ -64,10 +64,10 @@ const Index = () => {
 
   // If showing lesson
   if (currentLesson) {
-    const lesson = LESSONS_DATA.find(l => l.id === currentLesson);
+    const lesson = ALL_LESSONS.find(l => l.id === currentLesson);
     if (lesson) {
       return (
-        <LessonInterface
+        <EnhancedLessonInterface
           questions={lesson.questions}
           onComplete={handleLessonComplete}
           onExit={() => setCurrentLesson(null)}
