@@ -673,15 +673,19 @@ export const ALL_LESSONS: Lesson[] = [
     completionMessage: 'Супер! Ошибки - твои учителя! 📚'
   },
 
-  // Продолжение будет в следующем файле из-за ограничения длины...
-  
 ];
 
+// Импортируем дополнительные уроки
+import { MORE_LESSONS } from './moreLesson';
+
+// Объединяем все уроки
+export const COMPLETE_LESSONS = [...ALL_LESSONS, ...MORE_LESSONS];
+
 export const getModuleLessons = (module: string) => 
-  ALL_LESSONS.filter(lesson => lesson.module === module);
+  COMPLETE_LESSONS.filter(lesson => lesson.module === module);
 
 export const getWeekLessons = (week: number) => 
-  ALL_LESSONS.filter(lesson => lesson.week === week);
+  COMPLETE_LESSONS.filter(lesson => lesson.week === week);
 
 export const getModuleWeekLessons = (module: string, week: number) =>
-  ALL_LESSONS.filter(lesson => lesson.module === module && lesson.week === week);
+  COMPLETE_LESSONS.filter(lesson => lesson.module === module && lesson.week === week);
