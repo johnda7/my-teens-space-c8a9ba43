@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Calendar, MessageCircle, Users, Video, Award, Target, Shield, Heart, Brain } from 'lucide-react';
+import { Home, Calendar, MessageCircle, Users, Video, Award, Target, Shield, Heart, Brain, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
