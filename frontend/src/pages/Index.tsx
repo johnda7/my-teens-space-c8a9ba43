@@ -24,12 +24,19 @@ const Index = () => {
   const [nextLevelXP] = useState(600);
   const [currentWeek, setCurrentWeek] = useState(1);
 
-  const weekLessons = getWeekLessons(currentWeek).map((lesson, index) => ({
-    id: lesson.id,
-    title: lesson.title,
-    status: (index === 0 ? 'current' : index < 2 ? 'available' : 'locked') as 'locked' | 'available' | 'current' | 'completed',
-    xp: lesson.xp,
-  }));
+  const getModuleWeekLessons = () => {
+    if (!currentModule) return [];
+    return getWeekLessons(currentWeek)
+      .filter(lesson => lesson.module === currentModule)
+      .map((lesson, index) => ({
+        id: lesson.id,
+        title: lesson.title,
+        status: (index === 0 ? 'current' : index < 2 ? 'available' : 'locked') as 'locked' | 'available' | 'current' | 'completed',
+        xp: lesson.xp,
+      }));
+  };
+
+  const weekLessons = getModuleWeekLessons();
 
   const modules = [
     { id: 'boundaries', name: 'Границы', icon: Shield, theme: 'boundaries' as const, progress: 25 },
