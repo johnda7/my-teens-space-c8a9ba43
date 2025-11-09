@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, Calendar, MessageCircle, Users, Video, Award, Target, Shield, Heart, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -6,9 +6,9 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import LearningPath from '@/components/LearningPath';
 import ModuleRoom from '@/components/ModuleRoom';
-import LessonInterface from '@/components/LessonInterface';
+import EnhancedLessonInterface from '@/components/EnhancedLessonInterface';
 import LessonComplete from '@/components/LessonComplete';
-import { LESSONS_DATA, getWeekLessons } from '@/data/lessonsData';
+import { ALL_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Index = () => {
