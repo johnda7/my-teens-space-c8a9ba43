@@ -8,7 +8,7 @@ import LearningPath from '@/components/LearningPath';
 import ModuleRoom from '@/components/ModuleRoom';
 import EnhancedLessonInterface from '@/components/EnhancedLessonInterface';
 import LessonComplete from '@/components/LessonComplete';
-import { ALL_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
+import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Index = () => {
