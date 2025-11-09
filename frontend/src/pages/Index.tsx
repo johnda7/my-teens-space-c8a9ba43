@@ -333,7 +333,7 @@ const Index = () => {
                 className="bg-card p-6 rounded-3xl shadow-lg border border-border"
               >
                 <h3 className="text-lg font-bold text-foreground mb-4">Твой прогресс</h3>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary">{streak}</div>
                     <div className="text-xs text-muted-foreground">Дней подряд</div>
@@ -347,6 +347,13 @@ const Index = () => {
                     <div className="text-xs text-muted-foreground">Уровень</div>
                   </div>
                 </div>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.location.href = '/parent'}
+                >
+                  👨‍👩‍👧 Кабинет родителя
+                </Button>
               </motion.div>
             </motion.div>
           )}
