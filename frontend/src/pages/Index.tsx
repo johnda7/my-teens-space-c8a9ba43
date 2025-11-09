@@ -68,11 +68,34 @@ const Index = () => {
   };
 
   const handleLessonComplete = (xpEarned: number) => {
-    const lesson = LESSONS_DATA.find(l => l.id === currentLesson);
+    const lesson = COMPLETE_LESSONS.find(l => l.id === currentLesson);
     setXp(prev => prev + xpEarned);
     setCompletedLesson({ xpEarned, message: lesson?.completionMessage || 'Отлично!' });
     setCurrentLesson(null);
     setShowCompletion(true);
+    
+    // Проверяем, завершен ли последний урок последнего модуля
+    const allModulesComplete = modules.every(m => m.progress >= 100);
+    if (allModulesComplete && initialScores && !finalScores) {
+      // Показываем финальное колесо баланса
+      setTimeout(() => {
+        setShowBalanceWheel(true);
+        setBalanceType('final');
+      }, 2000);
+    }
+  };
+  
+  const handleBalanceComplete = (scores: Record<string, number>, answers: Record<string, string>) => {
+    if (balanceType === 'initial') {
+      setInitialScores(scores);
+      localStorage.setItem('initialBalanceScores', JSON.stringify(scores));
+      localStorage.setItem('initialBalanceAnswers', JSON.stringify(answers));
+    } else {
+      setFinalScores(scores);
+      localStorage.setItem('finalBalanceScores', JSON.stringify(scores));
+      localStorage.setItem('finalBalanceAnswers', JSON.stringify(answers));
+    }
+    setShowBalanceWheel(false);
   };
 
   const handleContinueAfterCompletion = () => {
