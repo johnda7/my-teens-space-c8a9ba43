@@ -509,9 +509,9 @@ const Index = () => {
         <div className="flex justify-around p-2">
           {[
             { id: 'home', icon: Home, label: 'Главная' },
+            { id: 'progress', icon: TrendingUp, label: 'Прогресс' },
             { id: 'checkin', icon: Calendar, label: 'Чек-ин' },
             { id: 'chat', icon: MessageCircle, label: 'Чат' },
-            { id: 'group', icon: Users, label: 'Группа' },
             { id: 'videos', icon: Video, label: 'Видео' },
           ].map((tab, index) => (
             <motion.button
