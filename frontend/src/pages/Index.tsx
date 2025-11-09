@@ -128,38 +128,74 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 pb-20">
       {/* Header */}
       <motion.div 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="bg-gradient-to-r from-primary via-secondary to-accent p-6 text-white shadow-lg sticky top-0 z-40"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 100 }}
+        className="bg-gradient-to-r from-primary via-secondary to-accent p-6 text-white shadow-2xl sticky top-0 z-40"
       >
         <div className="flex items-center justify-between mb-4">
-          <div>
+          <motion.div
+            initial={{ x: -50 }}
+            animate={{ x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             <h1 className="text-2xl font-bold">MyTeens.Space</h1>
-            <p className="text-sm opacity-90">с психологом Катей</p>
-          </div>
+            <p className="text-sm opacity-90">с психологом Катей Карпенко</p>
+          </motion.div>
           <div className="flex gap-3">
             <motion.div 
-              whileHover={{ scale: 1.1 }}
-              className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur"
+              whileHover={{ scale: 1.15, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
+              animate={{ 
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                scale: {
+                  duration: 1,
+                  repeat: Infinity,
+                  repeatDelay: 2
+                }
+              }}
+              className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
             >
-              <span className="text-xl">🔥</span>
-              <span className="font-bold">{streak}</span>
+              <motion.span 
+                className="text-2xl"
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
+              >
+                🔥
+              </motion.span>
+              <span className="font-bold text-lg">{streak}</span>
             </motion.div>
             <motion.div 
-              whileHover={{ scale: 1.1 }}
-              className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur"
+              whileHover={{ scale: 1.15, rotate: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
             >
-              <Award className="w-5 h-5" />
-              <span className="font-bold">{level}</span>
+              <Award className="w-6 h-6" />
+              <span className="font-bold text-lg">{level}</span>
             </motion.div>
           </div>
         </div>
         <div className="space-y-2">
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-sm font-medium">
             <span>Уровень {level}</span>
-            <span>{xp}/{nextLevelXP} XP</span>
+            <motion.span
+              key={xp}
+              initial={{ scale: 1.5, color: "#ffc800" }}
+              animate={{ scale: 1, color: "#ffffff" }}
+            >
+              {xp}/{nextLevelXP} XP
+            </motion.span>
           </div>
-          <Progress value={(xp / nextLevelXP) * 100} className="h-3 bg-white/30" />
+          <div className="relative">
+            <Progress value={(xp / nextLevelXP) * 100} className="h-4 bg-white/30" />
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+            />
+          </div>
         </div>
       </motion.div>
 
