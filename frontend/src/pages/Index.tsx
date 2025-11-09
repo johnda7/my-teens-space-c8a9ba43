@@ -23,6 +23,24 @@ const Index = () => {
   const [xp, setXp] = useState(450);
   const [nextLevelXP] = useState(600);
   const [currentWeek, setCurrentWeek] = useState(1);
+  
+  // Колесо баланса
+  const [showBalanceWheel, setShowBalanceWheel] = useState(false);
+  const [balanceType, setBalanceType] = useState<'initial' | 'final'>('initial');
+  const [initialScores, setInitialScores] = useState<Record<string, number> | null>(null);
+  const [finalScores, setFinalScores] = useState<Record<string, number> | null>(null);
+  
+  useEffect(() => {
+    // Проверяем есть ли сохраненная начальная оценка
+    const savedInitialScores = localStorage.getItem('initialBalanceScores');
+    if (savedInitialScores) {
+      setInitialScores(JSON.parse(savedInitialScores));
+    } else {
+      // Показываем колесо баланса при первом запуске
+      setShowBalanceWheel(true);
+      setBalanceType('initial');
+    }
+  }, []);
 
   const getModuleWeekLessons = () => {
     if (!currentModule) return [];
