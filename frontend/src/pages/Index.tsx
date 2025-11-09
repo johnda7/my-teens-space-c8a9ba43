@@ -105,6 +105,16 @@ const Index = () => {
     setCompletedLesson(null);
   };
 
+  // If showing balance assessment
+  if (showBalanceWheel) {
+    return (
+      <BalanceAssessment 
+        onComplete={handleBalanceComplete}
+        type={balanceType}
+      />
+    );
+  }
+  
   // If showing lesson
   if (currentLesson) {
     const lesson = COMPLETE_LESSONS.find(l => l.id === currentLesson);
