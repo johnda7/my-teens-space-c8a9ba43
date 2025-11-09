@@ -8,6 +8,8 @@ import LearningPath from '@/components/LearningPath';
 import ModuleRoom from '@/components/ModuleRoom';
 import EnhancedLessonInterface from '@/components/EnhancedLessonInterface';
 import LessonComplete from '@/components/LessonComplete';
+import BalanceAssessment from '@/components/BalanceAssessment';
+import WheelOfBalance from '@/components/WheelOfBalance';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
 
