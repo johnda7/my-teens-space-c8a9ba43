@@ -450,28 +450,54 @@ const Index = () => {
       <motion.div 
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border shadow-lg z-50"
+        transition={{ type: "spring", stiffness: 100 }}
+        className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t-4 border-primary/20 shadow-2xl z-50"
       >
-        <div className="flex justify-around p-3">
+        <div className="flex justify-around p-2">
           {[
             { id: 'home', icon: Home, label: 'Главная' },
             { id: 'checkin', icon: Calendar, label: 'Чек-ин' },
             { id: 'chat', icon: MessageCircle, label: 'Чат' },
             { id: 'group', icon: Users, label: 'Группа' },
             { id: 'videos', icon: Video, label: 'Видео' },
-          ].map((tab) => (
+          ].map((tab, index) => (
             <motion.button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ scale: 1.1, y: -5 }}
               whileTap={{ scale: 0.9 }}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center gap-1 px-3 py-3 rounded-2xl transition-all relative ${
                 activeTab === tab.id
-                  ? 'text-primary bg-primary/10'
+                  ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <tab.icon className="w-6 h-6" />
-              <span className="text-xs font-medium">{tab.label}</span>
+              <AnimatePresence>
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-primary/10 rounded-2xl"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </AnimatePresence>
+              <motion.div
+                animate={activeTab === tab.id ? { 
+                  y: [0, -3, 0],
+                  scale: [1, 1.1, 1]
+                } : {}}
+                transition={{ duration: 0.3 }}
+                className="relative z-10"
+              >
+                <tab.icon className="w-6 h-6" />
+              </motion.div>
+              <span className="text-xs font-semibold relative z-10">{tab.label}</span>
             </motion.button>
           ))}
         </div>
