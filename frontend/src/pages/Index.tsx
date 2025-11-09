@@ -64,7 +64,7 @@ const Index = () => {
 
   // If showing lesson
   if (currentLesson) {
-    const lesson = ALL_LESSONS.find(l => l.id === currentLesson);
+    const lesson = COMPLETE_LESSONS.find(l => l.id === currentLesson);
     if (lesson) {
       return (
         <EnhancedLessonInterface
