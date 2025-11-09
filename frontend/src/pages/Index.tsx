@@ -351,6 +351,60 @@ const Index = () => {
             </motion.div>
           )}
 
+          {activeTab === 'progress' && (
+            <motion.div
+              key="progress"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-6"
+            >
+              {initialScores && (
+                <WheelOfBalance 
+                  scores={finalScores || initialScores}
+                  type={finalScores ? 'comparison' : 'initial'}
+                  initialScores={finalScores ? initialScores : undefined}
+                  size="large"
+                />
+              )}
+              
+              {!initialScores && (
+                <div className="bg-card p-8 rounded-3xl shadow-lg border border-border text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="text-6xl mb-4"
+                  >
+                    📊
+                  </motion.div>
+                  <h2 className="text-2xl font-bold text-foreground mb-4">
+                    Колесо баланса
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Пройди начальную оценку, чтобы увидеть свой прогресс!
+                  </p>
+                  <Button 
+                    size="lg"
+                    onClick={() => {
+                      setShowBalanceWheel(true);
+                      setBalanceType('initial');
+                    }}
+                  >
+                    Начать оценку
+                  </Button>
+                </div>
+              )}
+              
+              {initialScores && !finalScores && (
+                <div className="bg-gradient-to-r from-purple-100 to-blue-100 p-6 rounded-3xl border-2 border-purple-200">
+                  <p className="text-center text-muted-foreground">
+                    💡 <strong>Совет:</strong> Пройди все модули обучения, чтобы увидеть свой прогресс в конце!
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          )}
+
           {activeTab === 'checkin' && (
             <motion.div
               key="checkin"
