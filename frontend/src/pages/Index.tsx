@@ -212,33 +212,59 @@ const Index = () => {
             >
               {/* Modules Grid */}
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-4">Модули обучения</h2>
-                <div className="grid grid-cols-2 gap-4">
+                <motion.h2 
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  className="text-3xl font-bold text-foreground mb-6"
+                >
+                  Модули обучения
+                </motion.h2>
+                <div className="grid grid-cols-2 gap-5">
                   {modules.map((module, index) => {
                     const Icon = module.icon;
                     return (
                       <motion.button
                         key={module.id}
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ delay: index * 0.1, type: "spring" }}
-                        whileHover={{ scale: 1.05, y: -5 }}
+                        initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                        transition={{ 
+                          delay: index * 0.15, 
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 15
+                        }}
+                        whileHover={{ 
+                          scale: 1.08, 
+                          y: -8,
+                          boxShadow: "0 20px 40px rgba(0,0,0,0.15)"
+                        }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setCurrentModule(module.id)}
-                        className="bg-card p-6 rounded-3xl shadow-lg border-2 border-border hover:border-primary transition-all"
+                        className="bg-card p-6 rounded-3xl shadow-xl border-3 border-border hover:border-primary transition-all relative overflow-hidden"
                       >
-                        <div className="flex flex-col items-center gap-3">
-                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br ${
-                            module.theme === 'boundaries' ? 'from-purple-500/20 to-pink-500/20' :
-                            module.theme === 'confidence' ? 'from-yellow-500/20 to-orange-500/20' :
-                            module.theme === 'emotions' ? 'from-blue-500/20 to-cyan-500/20' :
-                            'from-pink-500/20 to-rose-500/20'
-                          }`}>
-                            <Icon className="w-8 h-8 text-primary" />
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"
+                          whileHover={{ opacity: 1 }}
+                          initial={{ opacity: 0 }}
+                        />
+                        <div className="relative flex flex-col items-center gap-3">
+                          <motion.div 
+                            className={`w-20 h-20 rounded-3xl flex items-center justify-center bg-gradient-to-br shadow-lg ${
+                              module.theme === 'boundaries' ? 'from-purple-500/30 to-pink-500/30' :
+                              module.theme === 'confidence' ? 'from-yellow-500/30 to-orange-500/30' :
+                              module.theme === 'emotions' ? 'from-blue-500/30 to-cyan-500/30' :
+                              'from-pink-500/30 to-rose-500/30'
+                            }`}
+                            whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <Icon className="w-10 h-10 text-primary" />
+                          </motion.div>
+                          <h3 className="font-bold text-lg text-foreground">{module.name}</h3>
+                          <div className="w-full">
+                            <Progress value={module.progress} className="w-full h-3 mb-2" />
+                            <span className="text-sm font-semibold text-muted-foreground">{module.progress}%</span>
                           </div>
-                          <h3 className="font-bold text-foreground">{module.name}</h3>
-                          <Progress value={module.progress} className="w-full h-2" />
-                          <span className="text-xs text-muted-foreground">{module.progress}%</span>
                         </div>
                       </motion.button>
                     );
