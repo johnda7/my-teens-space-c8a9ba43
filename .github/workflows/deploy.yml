@@ -37,8 +37,11 @@ jobs:
         run: |
           cd frontend
           npm run build
+          # Copy 404.html for SPA routing
+          cp dist/index.html dist/404.html
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://your-backend-url.com' }}
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
