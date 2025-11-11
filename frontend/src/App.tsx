@@ -33,7 +33,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename="/my-teens-space-c8a9ba43">
+        <BrowserRouter>
           <Routes>
             {/* Прямой доступ без авторизации */}
             <Route path="/" element={<Index />} />
