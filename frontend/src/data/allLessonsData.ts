@@ -1,12 +1,33 @@
+export type QuestionType = 'choice' | 'input' | 'slider' | 'emotion' | 'matching' | 'multiple' | 'interactive-zones' | 'swipe-cards' | 'mood-slider' | 'boundary-builder' | 'voice-note';
+
 export interface Question {
   id: string;
-  type: 'choice' | 'input' | 'slider' | 'emotion' | 'matching' | 'multiple';
+  type: QuestionType;
   question: string;
-  options?: string[];
-  correctAnswer?: string | number | string[];
+  options?: any[] | Record<string, any>;
+  correctAnswer?: string | number | string[] | boolean;
   explanation?: string;
-  katyaResponse?: string;
+  katyaResponse?: any;
   pairs?: { left: string; right: string }[];
+  // New fields for gamified questions
+  title?: string;
+  instruction?: string;
+  zones?: any[];
+  cards?: any[];
+  emoji?: string;
+  labels?: string[];
+  gradient?: string;
+  katyaResponses?: Record<number, string>;
+  bricks?: any[];
+  wallStrength?: any;
+  rewards?: any;
+  placeholder?: string;
+  examples?: string[];
+  feedback?: any;
+  xpReward?: number;
+  animation?: string;
+  haptic?: string;
+  streakBonus?: number;
 }
 
 export interface Lesson {
@@ -17,7 +38,15 @@ export interface Lesson {
   week: number;
   xp: number;
   questions: Question[];
-  completionMessage: string;
+  completionMessage: any;
+  // New fields
+  subtitle?: string;
+  estimatedTime?: string;
+  preview?: any;
+  intro?: any;
+  completion?: any;
+  hints?: any;
+  telegram?: any;
 }
 
 export const ALL_LESSONS: Lesson[] = [
@@ -26,49 +55,234 @@ export const ALL_LESSONS: Lesson[] = [
   // Неделя 1
   {
     id: 'boundaries-w1-1',
-    title: 'Что такое границы?',
-    description: 'Учимся понимать личные границы',
+    title: '🛡️ Твоя территория',
+    subtitle: 'Где твои границы, чемпион?',
+    description: 'Разберём что такое личные границы через игру',
     module: 'boundaries',
     week: 1,
-    xp: 50,
+    xp: 100, // Первый урок = больше XP!
+    estimatedTime: '5 мин',
+    preview: {
+      emoji: '🚀',
+      color: 'from-purple-500 to-pink-500',
+      animation: 'bounce'
+    },
+    
+    intro: {
+      type: 'story',
+      slides: [
+        {
+          katya: 'celebrate',
+          text: 'Привет! Я Катя! 💜',
+          subtext: 'Твой личный психолог-друг',
+          animation: 'slideUp',
+          haptic: 'light'
+        },
+        {
+          katya: 'thinking',
+          text: 'Представь свою комнату...',
+          subtext: 'Это твоя территория, да?',
+          animation: 'fadeIn'
+        },
+        {
+          katya: 'default',
+          text: 'А что если кто-то заходит без стука? 🤔',
+          subtext: 'Бесит? Это про границы!',
+          animation: 'pop',
+          haptic: 'medium'
+        }
+      ]
+    },
+    
     questions: [
       {
         id: 'b1-1-q1',
-        type: 'choice',
-        question: 'Что такое личные границы?',
-        options: [
-          'Линии на карте',
-          'Правила, которые защищают мое пространство',
-          'То, что говорят родители',
-          'Забор вокруг дома'
+        type: 'interactive-zones',
+        title: 'Твоё личное пространство',
+        question: 'Отметь ВСЕ зоны, которые только ТВОИ',
+        instruction: 'Тапни на все, что считаешь своим',
+        zones: [
+          { id: 'phone', emoji: '📱', label: 'Телефон', correct: true },
+          { id: 'diary', emoji: '📔', label: 'Дневник', correct: true },
+          { id: 'room', emoji: '🚪', label: 'Комната', correct: true },
+          { id: 'thoughts', emoji: '💭', label: 'Мысли', correct: true },
+          { id: 'friends', emoji: '👥', label: 'Друзья', correct: false },
+          { id: 'family-tv', emoji: '📺', label: 'Общий ТВ', correct: false },
+          { id: 'school', emoji: '🏫', label: 'Школа', correct: false },
+          { id: 'secrets', emoji: '🤐', label: 'Секреты', correct: true }
         ],
-        correctAnswer: 'Правила, которые защищают мое пространство',
-        explanation: 'Личные границы - это невидимые правила, которые помогают нам чувствовать себя комфортно и безопасно.',
-        katyaResponse: 'Отлично! Границы - это как невидимая защита вокруг тебя. 🛡️'
+        feedback: {
+          perfect: 'ВАУ! Ты точно понимаешь свои границы! 🔥',
+          good: 'Почти идеально! Помни: твои мысли и секреты - только твои!',
+          needWork: 'Давай разберём: личное - это то, что принадлежит только тебе'
+        },
+        xpReward: 20,
+        animation: 'pulse-on-tap',
+        haptic: 'impact'
       },
       {
         id: 'b1-1-q2',
-        type: 'emotion',
-        question: 'Как ты себя чувствуешь, когда кто-то нарушает твои границы?',
-        options: ['😊', '😐', '😔', '😡'],
-        katyaResponse: 'Спасибо за честность. Это нормально - чувствовать дискомфорт, когда границы нарушены.'
+        type: 'swipe-cards',
+        title: 'Это ОК или НЕ ОК? 🤷',
+        question: 'Свайпни влево ❌ или вправо ✅',
+        cards: [
+          {
+            situation: 'Мама читает твою переписку',
+            emoji: '📱',
+            correctAnswer: 'not-ok',
+            explanation: 'Переписка - твоё личное пространство'
+          },
+          {
+            situation: 'Друг берёт твои вещи без спроса',
+            emoji: '🎒',
+            correctAnswer: 'not-ok',
+            explanation: 'Даже друзья должны спрашивать!'
+          },
+          {
+            situation: 'Ты говоришь "нет" на просьбу',
+            emoji: '✋',
+            correctAnswer: 'ok',
+            explanation: 'Ты имеешь право отказывать!'
+          },
+          {
+            situation: 'Родители стучатся в комнату',
+            emoji: '🚪',
+            correctAnswer: 'ok',
+            explanation: 'Уважение к твоему пространству!'
+          }
+        ],
+        xpReward: 25,
+        streakBonus: 5,
+        animation: 'swipe-spring',
+        haptic: 'selection'
       },
       {
         id: 'b1-1-q3',
-        type: 'choice',
-        question: 'Какая фраза помогает установить границу?',
-        options: [
-          'Мне неудобно, когда...',
-          'Ты всегда делаешь...',
-          'Я не знаю',
-          'Все равно'
+        type: 'mood-slider',
+        title: 'Проверка вайба',
+        question: 'Насколько комфортно тебе говорить "нет"?',
+        emoji: '😰😕😐😊😎',
+        labels: ['Ужасно', 'Сложно', 'Норм', 'Легко', 'Изи'],
+        gradient: 'from-red-500 via-yellow-500 to-green-500',
+        katyaResponses: {
+          1: 'Понимаю, это сложно... Но мы научимся! 💪',
+          2: 'Многим тяжело, ты не один такой',
+          3: 'Неплохо! Есть куда расти',
+          4: 'Круто! Ты уже на правильном пути',
+          5: 'ВАУ! Ты просто мастер границ! 🔥'
+        },
+        xpReward: 15,
+        animation: 'gradient-flow',
+        haptic: 'light'
+      },
+      {
+        id: 'b1-1-q4',
+        type: 'boundary-builder',
+        title: '🧱 Построй свою границу',
+        question: 'Выбери "кирпичики" для своей защиты',
+        instruction: 'Тапай на фразы, которые помогут защитить границы',
+        bricks: [
+          { text: 'Мне нужно подумать', power: 10, correct: true },
+          { text: 'Ладно, если настаиваешь...', power: -5, correct: false },
+          { text: 'Нет, спасибо', power: 15, correct: true },
+          { text: 'Я не готов это обсуждать', power: 12, correct: true },
+          { text: 'Ну... наверное да', power: -10, correct: false },
+          { text: 'Это моё личное дело', power: 18, correct: true },
+          { text: 'Давай в другой раз', power: 8, correct: true },
+          { text: 'Окей, чтобы не обидеть', power: -15, correct: false }
         ],
-        correctAnswer: 'Мне неудобно, когда...',
-        explanation: 'Я-высказывания помогают выразить свои чувства без обвинений.',
-        katyaResponse: 'Супер! Так ты говоришь о своих чувствах, а не обвиняешь. 💚'
+        wallStrength: {
+          max: 100,
+          good: 70,
+          ok: 40
+        },
+        rewards: {
+          perfect: { xp: 30, badge: 'wall-master' },
+          good: { xp: 20 },
+          ok: { xp: 10 }
+        },
+        animation: 'stack-build',
+        haptic: 'heavy'
+      },
+      {
+        id: 'b1-1-q5',
+        type: 'voice-note',
+        title: '🎤 Твой голос',
+        question: 'Запиши, как ты скажешь "нет" (или напиши)',
+        placeholder: 'Например: "Извини, но я не могу"',
+        options: {
+          voice: true,
+          text: true,
+          anonymous: true
+        },
+        examples: [
+          'Спасибо, но нет',
+          'Я пас',
+          'Не мой вайб',
+          'Давай в другой раз'
+        ],
+        katyaResponse: 'Супер! Ты нашёл свой способ! Запомни его 💜',
+        xpReward: 20,
+        explanation: 'first-voice',
+        haptic: 'success'
       }
     ],
-    completionMessage: 'Поздравляю! Ты сделал первый шаг к пониманию границ! 🎉'
+    completionMessage: '🎉 ЛЕГЕНДА! Первый урок пройден!',
+    completion: {
+      minigame: {
+        type: 'catch-the-vibe',
+        title: 'Лови свой вайб! ✨',
+        description: 'Собери все фиолетовые сердечки за 15 сек',
+        rewards: {
+          perfect: { xp: 50, item: 'purple-shield' },
+          good: { xp: 30 },
+          ok: { xp: 15 }
+        }
+      },
+      
+      message: '🎉 ЛЕГЕНДА! Первый урок пройден!',
+      subMessage: 'Ты получил навык "Защитник границ"',
+      
+      stats: {
+        show: true,
+        earned: ['xp', 'streak', 'achievement'],
+        nextUnlock: 'Следующий урок через 5 часов (или сейчас за 💎)'
+      },
+      
+      share: {
+        enabled: true,
+        text: 'Я прошёл первый урок в @MyTeensSpace! 🔥',
+        achievement: 'boundary-defender-1'
+      },
+      
+      katya: {
+        mood: 'celebrate',
+        message: 'Ты супер! Увидимся завтра? 😉',
+        sticker: 'katya-wink.webp'
+      }
+    },
+    
+    hints: {
+      enabled: true,
+      triggerAfter: 10,
+      messages: [
+        'Застрял? Тапни на лампочку!',
+        'Помни: нет неправильных ответов про чувства',
+        'Совет: доверяй себе!'
+      ]
+    },
+    
+    telegram: {
+      haptic: 'all-interactions',
+      cloudSave: true,
+      mainButton: {
+        text: 'Следующий урок',
+        color: '#8B5CF6',
+        textColor: '#FFFFFF'
+      },
+      backButton: true,
+      notifyOnComplete: true
+    }
   },
   {
     id: 'boundaries-w1-2',

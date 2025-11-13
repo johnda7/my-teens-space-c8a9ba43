@@ -10,6 +10,7 @@ from enum import Enum
 class UserRole(str, Enum):
     STUDENT = "student"
     PARENT = "parent"
+    PARENT_LEARNING = "parent_learning"
     CURATOR = "curator"
 
 

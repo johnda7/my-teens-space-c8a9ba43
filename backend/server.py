@@ -12,6 +12,12 @@ from datetime import datetime, timedelta
 import random
 import string
 
+# Импортируем модуль для Telegram аутентификации
+from telegram_auth import validate_telegram_webapp_data, parse_telegram_user_data
+
+# Импортируем модели
+from models import UserRole
+
 # Импортируем модели (сначала загружаем .env, потом импортируем)
 ROOT_DIR = Path(__file__).parent
 
@@ -149,6 +155,85 @@ async def create_curator(name: str, age: int = 30):
         "curator": curator,
         "access_code": code,
         "message": "Куратор создан. Используйте этот код для входа."
+    }
+
+
+@api_router.post("/auth/telegram-login")
+async def telegram_login(init_data: str, selected_role: Optional[str] = None):
+    """
+    Аутентификация пользователя через Telegram WebApp
+    
+    Args:
+        init_data: Строка initData от Telegram WebApp
+        selected_role: Выбранная роль (student, parent, parent_learning, curator)
+    
+    Returns:
+        Информация о пользователе
+    """
+    # Валидация initData (отключена для разработки, включить в production!)
+    # if not validate_telegram_webapp_data(init_data):
+    #     raise HTTPException(status_code=401, detail="Невалидные данные от Telegram")
+    
+    # Парсим данные пользователя
+    telegram_user_data = parse_telegram_user_data(init_data)
+    
+    if not telegram_user_data:
+        raise HTTPException(status_code=400, detail="Не удалось извлечь данные пользователя")
+    
+    telegram_id = telegram_user_data['telegram_id']
+    
+    # Проверяем, существует ли пользователь
+    existing_user = await db.users.find_one({"telegram_id": telegram_id})
+    
+    if existing_user:
+        # Пользователь уже есть, обновляем last_activity
+        await db.users.update_one(
+            {"telegram_id": telegram_id},
+            {"$set": {"last_activity": datetime.utcnow()}}
+        )
+        existing_user.pop("_id", None)
+        return {
+            "user": existing_user,
+            "is_new_user": False,
+            "message": "Добро пожаловать снова!"
+        }
+    
+    # Новый пользователь - требуется выбор роли
+    if not selected_role:
+        return {
+            "is_new_user": True,
+            "requires_role_selection": True,
+            "telegram_user": telegram_user_data,
+            "message": "Выберите вашу роль"
+        }
+    
+    # Создаем нового пользователя
+    user_id = str(uuid.uuid4())
+    user = {
+        "id": user_id,
+        "telegram_id": telegram_id,
+        "name": f"{telegram_user_data['first_name']} {telegram_user_data.get('last_name', '')}".strip(),
+        "age": 14 if selected_role == 'student' else 35,  # Дефолтный возраст
+        "role": selected_role,
+        "username": telegram_user_data.get('username', ''),
+        "language_code": telegram_user_data.get('language_code', 'ru'),
+        "photo_url": telegram_user_data.get('photo_url', ''),
+        "created_at": datetime.utcnow(),
+        "xp": 0,
+        "level": 1,
+        "streak": 0,
+        "achievements": [],
+        "notifications_enabled": True,
+        "last_activity": datetime.utcnow()
+    }
+    
+    await db.users.insert_one(user)
+    user.pop("_id", None)
+    
+    return {
+        "user": user,
+        "is_new_user": True,
+        "message": "Аккаунт успешно создан!"
     }
 
 

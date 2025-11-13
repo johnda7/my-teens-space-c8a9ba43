@@ -12,6 +12,7 @@ import BalanceAssessment from '@/components/BalanceAssessment';
 import WheelOfBalance from '@/components/WheelOfBalance';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
+import '@/styles/game.css';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -119,6 +120,7 @@ const Index = () => {
   if (currentLesson) {
     const lesson = COMPLETE_LESSONS.find(l => l.id === currentLesson);
     if (lesson) {
+      // Стандартный интерфейс урока
       return (
         <EnhancedLessonInterface
           questions={lesson.questions}

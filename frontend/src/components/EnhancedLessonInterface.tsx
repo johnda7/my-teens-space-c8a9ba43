@@ -8,6 +8,11 @@ import EnhancedKatya from './EnhancedKatya';
 import { Question } from '@/data/allLessonsData';
 import { CheckCircle2, XCircle, ArrowRight, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { InteractiveZones } from './LessonParts/InteractiveZones';
+import { SwipeCards } from './LessonParts/SwipeCards';
+import { MoodSlider } from './LessonParts/MoodSlider';
+import { BoundaryBuilder } from './LessonParts/BoundaryBuilder';
+import { VoiceNote } from './LessonParts/VoiceNote';
 
 interface EnhancedLessonInterfaceProps {
   questions: Question[];
@@ -52,7 +57,14 @@ const EnhancedLessonInterface = ({
     if (question.correctAnswer) {
       let correct = false;
       
-      if (Array.isArray(question.correctAnswer)) {
+      if (question.type === 'interactive-zones') {
+        const correctZones = question.zones?.filter(z => z.correct).map(z => z.id) || [];
+        correct = answer.length === correctZones.length && answer.every((id: string) => correctZones.includes(id));
+      } else if (question.type === 'boundary-builder') {
+        const correctBricks = question.bricks?.filter(b => b.correct).map(b => b.text) || [];
+        correct = answer.every((text: string) => correctBricks.includes(text));
+      }
+      else if (Array.isArray(question.correctAnswer)) {
         const answerArray = Array.isArray(answer) ? answer : [answer];
         correct = question.correctAnswer.length === answerArray.length &&
                  question.correctAnswer.every(item => answerArray.includes(item));
@@ -171,6 +183,24 @@ const EnhancedLessonInterface = ({
                 {question.question}
               </h3>
 
+              {/* Gamified Question Types */}
+              {question.type === 'interactive-zones' && (
+                <InteractiveZones question={question} onAnswer={(isCorrect, answer) => handleAnswer(answer)} />
+              )}
+              {question.type === 'swipe-cards' && (
+                <SwipeCards question={question} onAnswer={(isCorrect, answer) => handleAnswer(answer)} />
+              )}
+              {question.type === 'mood-slider' && (
+                <MoodSlider question={question} onAnswer={(answer) => handleAnswer(answer)} />
+              )}
+              {question.type === 'boundary-builder' && (
+                <BoundaryBuilder question={question} onAnswer={(isCorrect, answer) => handleAnswer(answer)} />
+              )}
+              {question.type === 'voice-note' && (
+                <VoiceNote question={question} onAnswer={(answer) => handleAnswer(answer)} />
+              )}
+
+
               {/* Choice Questions */}
               {question.type === 'choice' && question.options && (
                 <div className="space-y-4">
@@ -212,42 +242,13 @@ const EnhancedLessonInterface = ({
                           : 'bg-white border-primary/20 hover:border-primary'
                       }`}
                     >
-                      <span className="mr-3">
-                        {selectedMultiple.includes(option) ? '✓' : '○'}
-                      </span>
-                      {option}
+                      <div className={`w-6 h-6 rounded-md border-2 ${selectedMultiple.includes(option) ? 'bg-primary border-primary' : 'border-gray-300'}`} />
+                      <span>{option}</span>
                     </motion.button>
                   ))}
-                  {selectedMultiple.length > 0 && !showFeedback && (
-                    <Button 
-                      onClick={() => handleAnswer(selectedMultiple)}
-                      className="w-full mt-4" 
-                      size="lg"
-                    >
-                      Проверить ответ <ArrowRight className="ml-2" />
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* Emotion Questions */}
-              {question.type === 'emotion' && question.options && (
-                <div className="flex justify-center gap-6 flex-wrap">
-                  {question.options.map((emoji, index) => (
-                    <motion.button
-                      key={index}
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ delay: index * 0.1, type: "spring" }}
-                      whileHover={{ scale: 1.3, rotate: 15 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleAnswer(emoji)}
-                      disabled={showFeedback}
-                      className="text-7xl p-6 rounded-3xl hover:bg-primary/10 transition-all disabled:opacity-50 shadow-xl hover:shadow-2xl"
-                    >
-                      {emoji}
-                    </motion.button>
-                  ))}
+                  <Button onClick={() => handleAnswer(selectedMultiple)} disabled={showFeedback} className="w-full mt-4">
+                    Подтвердить
+                  </Button>
                 </div>
               )}
 
@@ -275,39 +276,38 @@ const EnhancedLessonInterface = ({
 
               {/* Slider Questions */}
               {question.type === 'slider' && (
-                <div className="space-y-8">
-                  <div className="px-6">
-                    <Slider
-                      value={sliderValue}
-                      onValueChange={setSliderValue}
-                      max={10}
-                      min={1}
-                      step={1}
-                      disabled={showFeedback}
-                      className="my-8"
-                    />
-                    <motion.div 
-                      className="text-center text-6xl font-bold text-primary"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 0.3 }}
-                      key={sliderValue[0]}
-                    >
-                      {sliderValue[0]}
-                    </motion.div>
-                  </div>
-                  <Button 
-                    onClick={() => handleAnswer(sliderValue[0])}
+                <div className="text-center">
+                  <Slider 
+                    value={sliderValue}
+                    onValueChange={setSliderValue}
+                    max={10}
+                    min={1}
+                    step={1}
                     disabled={showFeedback}
-                    className="w-full py-6 text-lg"
-                    size="lg"
+                    className="my-8"
+                  />
+                  <motion.div 
+                    className="text-center text-6xl font-bold text-primary"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 0.3 }}
+                    key={sliderValue[0]}
                   >
-                    Продолжить <ArrowRight className="ml-2" />
+                    {sliderValue[0]}
+                  </motion.div>
+                  <Button onClick={() => handleAnswer(sliderValue[0])} disabled={showFeedback} className="mt-6">
+                    Ответить
                   </Button>
                 </div>
               )}
+
+              {/* Matching Questions */}
+              {question.type === 'matching' && (
+                <p className="text-center text-red-500">Matching questions not implemented yet.</p>
+              )}
+
             </motion.div>
 
-            {/* Feedback */}
+            {/* Feedback Overlay */}
             <AnimatePresence>
               {showFeedback && (
                 <motion.div
