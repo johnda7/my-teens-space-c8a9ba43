@@ -10,10 +10,13 @@ import EnhancedLessonInterface from '@/components/EnhancedLessonInterface';
 import LessonComplete from '@/components/LessonComplete';
 import BalanceAssessment from '@/components/BalanceAssessment';
 import WheelOfBalance from '@/components/WheelOfBalance';
+import AnimatedKatyaV2 from '@/components/AnimatedKatyaV2';
+import { useTelegram } from '@/hooks/useTelegram';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Index = () => {
+  const { haptic, isInTelegram, user } = useTelegram();
   const [activeTab, setActiveTab] = useState('home');
   const [currentModule, setCurrentModule] = useState<string | null>(null);
   const [currentLesson, setCurrentLesson] = useState<string | null>(null);
@@ -341,13 +344,33 @@ const Index = () => {
             >
               {/* Modules Grid */}
               <div>
-                <motion.h2 
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  className="text-3xl font-bold text-foreground mb-6"
-                >
-                  Модули обучения
-                </motion.h2>
+                <div className="flex justify-between items-center mb-6">
+                  <motion.h2 
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="text-3xl font-bold text-foreground"
+                  >
+                    Модули обучения
+                  </motion.h2>
+                  {/* Animated Katya v2.0 */}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ 
+                      type: "spring", 
+                      stiffness: 200, 
+                      damping: 15,
+                      delay: 0.5 
+                    }}
+                  >
+                    <AnimatedKatyaV2 
+                      mood="default"
+                      message={user?.first_name ? `Привет, ${user.first_name}!` : "Привет! Начнем?"}
+                      className="w-24 h-24"
+                      animate={true}
+                    />
+                  </motion.div>
+                </div>
                 <div className="grid grid-cols-2 gap-5">
                   {modules.map((module, index) => {
                     const Icon = module.icon;
@@ -368,7 +391,10 @@ const Index = () => {
                           transition: { type: "spring", stiffness: 300 }
                         }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => setCurrentModule(module.id)}
+                        onClick={() => {
+                          if (haptic) haptic.light();
+                          setCurrentModule(module.id);
+                        }}
                         className="group relative bg-card p-6 rounded-3xl shadow-xl border-2 border-border hover:border-primary/50 transition-all duration-300 overflow-hidden"
                       >
                         {/* Animated gradient background */}
@@ -709,7 +735,10 @@ const Index = () => {
           ].map((tab, index) => (
             <motion.button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  haptic?.light();
+                  setActiveTab(tab.id);
+                }}
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
