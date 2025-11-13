@@ -36,6 +36,7 @@ jobs:
       - name: Build
         run: |
           cd frontend
+          rm -rf dist
           npm run build
           # Copy 404.html for SPA routing
           cp dist/index.html dist/404.html
