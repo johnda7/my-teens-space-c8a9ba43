@@ -10,11 +10,14 @@ import EnhancedLessonInterface from '@/components/EnhancedLessonInterface';
 import LessonComplete from '@/components/LessonComplete';
 import BalanceAssessment from '@/components/BalanceAssessment';
 import WheelOfBalance from '@/components/WheelOfBalance';
+import AnimatedKatyaV2 from '@/components/AnimatedKatyaV2';
+import { useTelegram } from '@/hooks/useTelegram';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/game.css';
 
 const Index = () => {
+  const { haptic, isInTelegram, user } = useTelegram();
   const [activeTab, setActiveTab] = useState('home');
   const [currentModule, setCurrentModule] = useState<string | null>(null);
   const [currentLesson, setCurrentLesson] = useState<string | null>(null);
@@ -185,70 +188,146 @@ const Index = () => {
       <motion.div 
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 100 }}
-        className="bg-gradient-to-r from-primary via-secondary to-accent p-6 text-white shadow-2xl sticky top-0 z-40"
+        transition={{ 
+          type: "spring", 
+          stiffness: 120,
+          damping: 20
+        }}
+        className="relative bg-gradient-to-r from-primary via-secondary to-accent p-6 text-white shadow-2xl sticky top-0 z-40 overflow-hidden"
       >
-        <div className="flex items-center justify-between mb-4">
+        {/* Animated background particles */}
+        <motion.div 
+          className="absolute inset-0 opacity-20"
+          animate={{
+            background: [
+              "radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)",
+              "radial-gradient(circle at 80% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)",
+              "radial-gradient(circle at 50% 80%, rgba(255,255,255,0.3) 0%, transparent 50%)",
+              "radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)",
+            ]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        <div className="relative flex items-center justify-between mb-4">
           <motion.div
-            initial={{ x: -50 }}
-            animate={{ x: 0 }}
-            transition={{ delay: 0.2 }}
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
           >
-            <h1 className="text-2xl font-bold">MyTeens.Space</h1>
-            <p className="text-sm opacity-90">с психологом Катей Карпенко</p>
+            <motion.h1 
+              className="text-2xl font-bold"
+              whileHover={{ scale: 1.02 }}
+            >
+              MyTeens.Space
+            </motion.h1>
+            <motion.p 
+              className="text-sm opacity-90"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.9 }}
+              transition={{ delay: 0.4 }}
+            >
+              с психологом Катей Карпенко
+            </motion.p>
           </motion.div>
           <div className="flex gap-3">
             <motion.div 
               whileHover={{ scale: 1.15, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
               animate={{ 
-                scale: [1, 1.1, 1],
+                y: [0, -5, 0],
               }}
               transition={{
-                scale: {
-                  duration: 1,
+                y: {
+                  duration: 2,
                   repeat: Infinity,
-                  repeatDelay: 2
+                  ease: "easeInOut"
                 }
               }}
-              className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
+              className="relative flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
             >
+              <motion.div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-400/20"
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  opacity: [0.5, 0.8, 0.5]
+                }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
               <motion.span 
-                className="text-2xl"
-                animate={{ rotate: [0, 15, -15, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
+                className="text-2xl relative z-10"
+                animate={{ 
+                  rotate: [0, 15, -15, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
               >
                 🔥
               </motion.span>
-              <span className="font-bold text-lg">{streak}</span>
+              <span className="font-bold text-lg relative z-10">{streak}</span>
             </motion.div>
             <motion.div 
               whileHover={{ scale: 1.15, rotate: -5 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
+              animate={{
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{
+                rotate: {
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }
+              }}
+              className="relative flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
             >
-              <Award className="w-6 h-6" />
-              <span className="font-bold text-lg">{level}</span>
+              <motion.div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-300/20 to-yellow-500/20"
+                animate={{ 
+                  scale: [1, 1.05, 1],
+                  opacity: [0.3, 0.6, 0.3]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <Award className="w-6 h-6 relative z-10" />
+              <span className="font-bold text-lg relative z-10">{level}</span>
             </motion.div>
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 relative">
           <div className="flex justify-between text-sm font-medium">
-            <span>Уровень {level}</span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Уровень {level}
+            </motion.span>
             <motion.span
               key={xp}
-              initial={{ scale: 1.5, color: "#ffc800" }}
-              animate={{ scale: 1, color: "#ffffff" }}
+              initial={{ scale: 1.3, y: -5 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="font-bold"
             >
               {xp}/{nextLevelXP} XP
             </motion.span>
           </div>
-          <div className="relative">
+          <div className="relative rounded-full overflow-hidden">
             <Progress value={(xp / nextLevelXP) * 100} className="h-4 bg-white/30" />
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-full"
               animate={{ x: ["-100%", "200%"] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                repeatDelay: 0.5,
+                ease: "easeInOut" 
+              }}
             />
           </div>
         </div>
@@ -267,13 +346,33 @@ const Index = () => {
             >
               {/* Modules Grid */}
               <div>
-                <motion.h2 
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  className="text-3xl font-bold text-foreground mb-6"
-                >
-                  Модули обучения
-                </motion.h2>
+                <div className="flex justify-between items-center mb-6">
+                  <motion.h2 
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="text-3xl font-bold text-foreground"
+                  >
+                    Модули обучения
+                  </motion.h2>
+                  {/* Animated Katya v2.0 */}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ 
+                      type: "spring", 
+                      stiffness: 200, 
+                      damping: 15,
+                      delay: 0.5 
+                    }}
+                  >
+                    <AnimatedKatyaV2 
+                      mood="default"
+                      message={user?.first_name ? `Привет, ${user.first_name}!` : "Привет! Начнем?"}
+                      className="w-24 h-24"
+                      animate={true}
+                    />
+                  </motion.div>
+                </div>
                 <div className="grid grid-cols-2 gap-5">
                   {modules.map((module, index) => {
                     const Icon = module.icon;
@@ -283,42 +382,101 @@ const Index = () => {
                         initial={{ scale: 0, rotate: -180, opacity: 0 }}
                         animate={{ scale: 1, rotate: 0, opacity: 1 }}
                         transition={{ 
-                          delay: index * 0.15, 
+                          delay: index * 0.1, 
                           type: "spring",
-                          stiffness: 200,
-                          damping: 15
+                          stiffness: 180,
+                          damping: 12
                         }}
                         whileHover={{ 
-                          scale: 1.08, 
-                          y: -8,
-                          boxShadow: "0 20px 40px rgba(0,0,0,0.15)"
+                          scale: 1.05, 
+                          y: -10,
+                          transition: { type: "spring", stiffness: 300 }
                         }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setCurrentModule(module.id)}
-                        className="bg-card p-6 rounded-3xl shadow-xl border-3 border-border hover:border-primary transition-all relative overflow-hidden"
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          if (haptic) haptic.light();
+                          setCurrentModule(module.id);
+                        }}
+                        className="group relative bg-card p-6 rounded-3xl shadow-xl border-2 border-border hover:border-primary/50 transition-all duration-300 overflow-hidden"
                       >
+                        {/* Animated gradient background */}
                         <motion.div
-                          className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"
-                          whileHover={{ opacity: 1 }}
-                          initial={{ opacity: 0 }}
+                          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                            module.theme === 'boundaries' ? 'bg-gradient-to-br from-purple-500/10 to-pink-500/10' :
+                            module.theme === 'confidence' ? 'bg-gradient-to-br from-yellow-500/10 to-orange-500/10' :
+                            module.theme === 'emotions' ? 'bg-gradient-to-br from-blue-500/10 to-cyan-500/10' :
+                            'bg-gradient-to-br from-pink-500/10 to-rose-500/10'
+                          }`}
                         />
+                        
+                        {/* Shimmer effect on hover */}
+                        <motion.div
+                          className="absolute inset-0 bg-shimmer-gradient opacity-0 group-hover:opacity-100"
+                          initial={{ x: "-100%" }}
+                          whileHover={{ x: "100%" }}
+                          transition={{ duration: 0.6 }}
+                        />
+                        
                         <div className="relative flex flex-col items-center gap-3">
                           <motion.div 
-                            className={`w-20 h-20 rounded-3xl flex items-center justify-center bg-gradient-to-br shadow-lg ${
-                              module.theme === 'boundaries' ? 'from-purple-500/30 to-pink-500/30' :
-                              module.theme === 'confidence' ? 'from-yellow-500/30 to-orange-500/30' :
-                              module.theme === 'emotions' ? 'from-blue-500/30 to-cyan-500/30' :
-                              'from-pink-500/30 to-rose-500/30'
+                            className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg relative ${
+                              module.theme === 'boundaries' ? 'bg-gradient-to-br from-purple-500/30 to-pink-500/30' :
+                              module.theme === 'confidence' ? 'bg-gradient-to-br from-yellow-500/30 to-orange-500/30' :
+                              module.theme === 'emotions' ? 'bg-gradient-to-br from-blue-500/30 to-cyan-500/30' :
+                              'bg-gradient-to-br from-pink-500/30 to-rose-500/30'
                             }`}
-                            whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                            transition={{ duration: 0.5 }}
+                            whileHover={{ 
+                              rotate: [0, -8, 8, -8, 0],
+                              scale: 1.15
+                            }}
+                            transition={{ 
+                              rotate: { duration: 0.5 },
+                              scale: { type: "spring", stiffness: 300 }
+                            }}
                           >
-                            <Icon className="w-10 h-10 text-primary" />
+                            <motion.div
+                              className="absolute inset-0 rounded-3xl bg-white/20"
+                              animate={{ 
+                                scale: [1, 1.1, 1],
+                                opacity: [0.5, 0, 0.5]
+                              }}
+                              transition={{ 
+                                duration: 2, 
+                                repeat: Infinity,
+                                delay: index * 0.2
+                              }}
+                            />
+                            <Icon className="w-10 h-10 text-primary relative z-10" />
                           </motion.div>
-                          <h3 className="font-bold text-lg text-foreground">{module.name}</h3>
+                          <motion.h3 
+                            className="font-bold text-lg text-foreground"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            {module.name}
+                          </motion.h3>
                           <div className="w-full">
-                            <Progress value={module.progress} className="w-full h-3 mb-2" />
-                            <span className="text-sm font-semibold text-muted-foreground">{module.progress}%</span>
+                            <div className="relative">
+                              <Progress value={module.progress} className="w-full h-3 mb-2" />
+                              {module.progress > 0 && (
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
+                                  animate={{ x: ["-100%", "100%"] }}
+                                  transition={{ 
+                                    duration: 1.5, 
+                                    repeat: Infinity,
+                                    repeatDelay: 2
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <motion.span 
+                              className="text-sm font-semibold text-muted-foreground"
+                              key={module.progress}
+                              initial={{ scale: 1.2 }}
+                              animate={{ scale: 1 }}
+                            >
+                              {module.progress}%
+                            </motion.span>
                           </div>
                         </div>
                       </motion.button>
@@ -579,7 +737,10 @@ const Index = () => {
           ].map((tab, index) => (
             <motion.button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  haptic?.light();
+                  setActiveTab(tab.id);
+                }}
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: index * 0.05 }}

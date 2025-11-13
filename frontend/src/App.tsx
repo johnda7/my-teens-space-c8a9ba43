@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 import Index from "./pages/Index";
 import ParentDashboard from "./pages/ParentDashboard";
 import CuratorDashboard from "./pages/CuratorDashboard";
@@ -45,12 +46,24 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
 };
 
 const App = () => {
+  useEffect(() => {
+    // Telegram Web App initialization
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-web-app.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename="/my-teens-space-c8a9ba43">
+        <BrowserRouter>
           <Routes>
             {/* Публичные роуты */}
             <Route path="/login" element={<LoginPage />} />

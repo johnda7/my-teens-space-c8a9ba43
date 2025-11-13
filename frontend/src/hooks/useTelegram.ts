@@ -97,12 +97,6 @@ export const useTelegram = () => {
     showMainButton,
     hideMainButton,
     showBackButton,
-    hideBackButton,
-    hapticFeedback,
-    notificationFeedback,
-    close,
-    openLink,
-    openTelegramLink,
-    WebApp, // Доступ к полному SDK
   };
 };
+
