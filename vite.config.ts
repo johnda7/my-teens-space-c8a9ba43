@@ -5,12 +5,12 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // GitHub Pages URL: https://johnda7.github.io/my-teens-space-c8a9ba43/
+  root: './frontend',
   base: '/my-teens-space-c8a9ba43/',
   build: {
-    outDir: 'dist',
+    outDir: '../dist',
+    emptyOutDir: true,
     sourcemap: false,
-    // Оптимизация для production
     rollupOptions: {
       output: {
         manualChunks: {
