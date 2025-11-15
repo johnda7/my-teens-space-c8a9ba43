@@ -29,13 +29,20 @@
 
 ## 🚀 Быстрый старт
 
+### ✅ Текущий статус (15.11.2025)
+- **Белый экран исправлен** ✅
+- **404 ошибка на GitHub Pages исправлена** ✅
+- **Добавлен basename в BrowserRouter** ✅
+- **Модальные overlays работают** ✅
+- **Build проходит успешно** ✅
+
 ### Требования
 - Node.js 18+ (или Bun)
 - Python 3.10+
 - MongoDB 4.4+
 - Telegram Bot Token (получить от [@BotFather](https://t.me/BotFather))
 
-### Установка
+### 🔧 Локальный запуск
 
 **Способ 1: Автоматический запуск**
 
@@ -48,11 +55,12 @@ cd my-teens-space-c8a9ba43
 ./start.sh
 ```
 
-**Способ 2: Ручной запуск**
+**Способ 2: Ручной запуск (пошагово)**
 
 ```bash
-# 1. Убедитесь что MongoDB запущен
-mongod  # или: brew services start mongodb-community
+# 1. Запустить MongoDB (ПЕРВЫМ!)
+brew services start mongodb-community  # macOS
+# или: mongod --dbpath ./data
 
 # 2. Backend (Terminal 1)
 cd backend
@@ -60,30 +68,76 @@ pip install -r requirements.txt
 cp .env.example .env  # Настройте MONGO_URL, TELEGRAM_BOT_TOKEN
 uvicorn server:app --reload --port 8000
 
-# 3. Frontend (Terminal 2)
+# 3. Frontend (Terminal 2) - ВАЖНО: запускать из папки frontend!
 cd frontend
 npm install  # или: bun install
 npm run dev  # Откроется на localhost:5173
 ```
 
-### ⚠️ Важно: Запуск dev-сервера
+### ⚠️ КРИТИЧНО: Запуск dev-сервера
 
 **Фронтенд ОБЯЗАТЕЛЬНО запускать из папки `frontend`:**
 
 ```bash
+# ✅ ПРАВИЛЬНО:
 cd frontend
 npm run dev
+
+# ❌ НЕПРАВИЛЬНО (Exit Code: 127):
+npm run dev  # из корня репозитория
 ```
 
-❌ **НЕ запускать из корня** (`npm run dev` из `/my-teens-space-c8a9ba43/`) - будет ошибка `Exit Code: 127`
+**Причина:** `package.json` находится в папке `frontend/`, не в корне проекта.
 
-### Доступ к приложению
+### 🌐 Доступ к приложению
 
 - **Локально:** http://localhost:5173/my-teens-space-c8a9ba43/
-- **Production:** https://johnda7.github.io/my-teens-space-c8a9ba43/
+- **Production (GitHub Pages):** https://johnda7.github.io/my-teens-space-c8a9ba43/
 - **Backend API:** http://localhost:8000/api
 - **API Docs:** http://localhost:8000/docs
 - **Тестовая авторизация:** http://localhost:5173/my-teens-space-c8a9ba43/test-auth.html
+
+### 🚀 Деплой на GitHub Pages
+
+**Автоматический деплой через GitHub Actions:**
+
+```bash
+# 1. Убедитесь что все изменения сохранены
+git status
+
+# 2. Добавьте все изменения
+git add .
+
+# 3. Создайте коммит
+git commit -m "Update: описание изменений"
+
+# 4. Запушьте на GitHub (автоматически запустит деплой)
+git push origin main
+
+# 5. Проверьте статус деплоя
+# Откройте: https://github.com/johnda7/my-teens-space-c8a9ba43/actions
+# Дождитесь зелёной галочки (обычно 2-3 минуты)
+
+# 6. Проверьте результат
+# Откройте: https://johnda7.github.io/my-teens-space-c8a9ba43/
+```
+
+**Что происходит при деплое:**
+1. GitHub Actions запускает workflow (`.github/workflows/deploy.yml`)
+2. Устанавливает зависимости: `npm ci --legacy-peer-deps`
+3. Собирает production build: `npm run build`
+4. Копирует `dist/index.html` в `dist/404.html` для SPA routing
+5. Добавляет `.nojekyll` файл
+6. Деплоит на GitHub Pages
+
+**Проверка деплоя:**
+- ✅ GitHub Actions: https://github.com/johnda7/my-teens-space-c8a9ba43/actions
+- ✅ Live сайт: https://johnda7.github.io/my-teens-space-c8a9ba43/
+
+**Важные настройки для GitHub Pages:**
+- `vite.config.ts`: `base: '/my-teens-space-c8a9ba43/'`
+- `App.tsx`: `<BrowserRouter basename="/my-teens-space-c8a9ba43">`
+- Репозиторий: Settings → Pages → Source: "GitHub Actions"
 
 ---
 
