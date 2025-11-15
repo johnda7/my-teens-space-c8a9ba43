@@ -50,12 +50,28 @@ const BalanceAssessment = ({ onComplete, type }: BalanceAssessmentProps) => {
 
   if (showIntro) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Animated Background Orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-20"
+            style={{ background: 'linear-gradient(135deg, #a855f7, #ec4899)', top: '-10%', left: '-10%' }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15], x: [0, 30, 0], y: [0, -30, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20"
+            style={{ background: 'linear-gradient(135deg, #3b82f6, #06b6d4)', bottom: '-10%', right: '-10%' }}
+            animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.15, 0.2], x: [0, -30, 0], y: [0, 30, 0] }}
+            transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+          />
+        </div>
+
         <motion.div
           initial={{ scale: 0, rotate: -10 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl"
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          className="max-w-2xl w-full bg-white/70 backdrop-blur-[40px] rounded-3xl p-8 shadow-[0_20px_60px_-25px_rgba(79,70,229,0.25)] border border-white/20 relative z-10"
         >
           <div className="text-center">
             <motion.div
@@ -73,7 +89,7 @@ const BalanceAssessment = ({ onComplete, type }: BalanceAssessmentProps) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-4xl font-bold text-foreground mb-4"
+              className="text-4xl font-bold text-gray-900 mb-4 ios-headline"
             >
               {type === 'initial' ? 'Давай познакомимся! 👋' : 'Посмотрим твой прогресс! 🎉'}
             </motion.h1>
@@ -82,7 +98,7 @@ const BalanceAssessment = ({ onComplete, type }: BalanceAssessmentProps) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="text-lg text-muted-foreground mb-8 leading-relaxed"
+              className="text-lg text-gray-600 mb-8 leading-relaxed ios-body"
             >
               {type === 'initial'
                 ? 'Сейчас я задам тебе несколько вопросов о разных сферах твоей жизни. Это поможет понять, с чего начать наше путешествие! 🌟'
@@ -131,12 +147,28 @@ const BalanceAssessment = ({ onComplete, type }: BalanceAssessmentProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 relative overflow-hidden">
+      {/* Animated Background Orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-15"
+          style={{ background: 'linear-gradient(135deg, #3b82f6, #a855f7)', top: '10%', left: '5%' }}
+          animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.25, 0.15], x: [0, 50, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-15"
+          style={{ background: 'linear-gradient(135deg, #ec4899, #3b82f6)', bottom: '5%', right: '10%' }}
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.15, 0.2], y: [0, -40, 0] }}
+          transition={{ duration: 28, repeat: Infinity, ease: "easeInOut", delay: 7 }}
+        />
+      </div>
+
       {/* Header */}
       <motion.div
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b-4 border-purple-200 shadow-lg"
+        className="sticky top-0 z-50 bg-white/70 backdrop-blur-[40px] border-b border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
       >
         <div className="max-w-4xl mx-auto p-4">
           <div className="flex items-center justify-between mb-3">
@@ -175,9 +207,9 @@ const BalanceAssessment = ({ onComplete, type }: BalanceAssessmentProps) => {
 
             {/* Question Card */}
             <motion.div
-              className="bg-white rounded-3xl p-8 shadow-2xl border-4 border-purple-100"
+              className="bg-white/70 backdrop-blur-[40px] rounded-3xl p-8 shadow-[0_20px_60px_-25px_rgba(79,70,229,0.25)] border border-white/20"
             >
-              <h3 className="text-2xl font-bold text-foreground mb-8 text-center leading-relaxed">
+              <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center leading-relaxed ios-title">
                 {currentQuestion.question}
               </h3>
 

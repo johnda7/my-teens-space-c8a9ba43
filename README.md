@@ -58,19 +58,32 @@ mongod  # или: brew services start mongodb-community
 cd backend
 pip install -r requirements.txt
 cp .env.example .env  # Настройте MONGO_URL, TELEGRAM_BOT_TOKEN
-uvicorn server:app --reload --port 8001
+uvicorn server:app --reload --port 8000
 
 # 3. Frontend (Terminal 2)
 cd frontend
 npm install  # или: bun install
-npm run dev  # Откроется на localhost:3000
+npm run dev  # Откроется на localhost:5173
 ```
+
+### ⚠️ Важно: Запуск dev-сервера
+
+**Фронтенд ОБЯЗАТЕЛЬНО запускать из папки `frontend`:**
+
+```bash
+cd frontend
+npm run dev
+```
+
+❌ **НЕ запускать из корня** (`npm run dev` из `/my-teens-space-c8a9ba43/`) - будет ошибка `Exit Code: 127`
 
 ### Доступ к приложению
 
-- **Локально:** http://localhost:3000/my-teens-space-c8a9ba43/
+- **Локально:** http://localhost:5173/my-teens-space-c8a9ba43/
 - **Production:** https://johnda7.github.io/my-teens-space-c8a9ba43/
-- **Тестовая авторизация:** http://localhost:3000/my-teens-space-c8a9ba43/test-auth.html
+- **Backend API:** http://localhost:8000/api
+- **API Docs:** http://localhost:8000/docs
+- **Тестовая авторизация:** http://localhost:5173/my-teens-space-c8a9ba43/test-auth.html
 
 ---
 

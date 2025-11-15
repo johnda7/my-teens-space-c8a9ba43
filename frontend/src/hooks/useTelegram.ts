@@ -97,6 +97,15 @@ export const useTelegram = () => {
     showMainButton,
     hideMainButton,
     showBackButton,
+    hideBackButton,
+    hapticFeedback,
+    notificationFeedback,
+    close,
+    openLink,
+    openTelegramLink,
+    // Добавляем для обратной совместимости
+    haptic: hapticFeedback,
+    isInTelegram: !!WebApp.initDataUnsafe?.user,
   };
 };
 

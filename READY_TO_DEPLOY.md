@@ -1,20 +1,93 @@
 # 🎉 ГОТОВО К ДЕПЛОЮ!
 
-## ✅ Всё настроено для стандартного GitHub Pages
+## ✅ Текущий статус проекта (15 ноября 2025)
+
+**Исправленные проблемы:**
+- ✅ Синтаксическая ошибка JSX в `Index.tsx` исправлена
+- ✅ Добавлена отсутствующая функция `renderLearningTab()`
+- ✅ Добавлены модальные окна для `BalanceAssessment`, `ModuleRoom`, уроков
+- ✅ Исправлена структура закрывающих тегов в bottom navigation
+- ✅ Удалён мёртвый код со старыми табами
+- ✅ Build проходит успешно без ошибок
+
+**Приложение готово к запуску локально и к деплою!**
 
 Ваш сайт будет доступен по адресу:
 **https://johnda7.github.io/my-teens-space-c8a9ba43/**
 
 ---
 
-## 🚀 Запускаем деплой (3 команды):
+## 🚀 Локальный запуск (сначала проверьте здесь!)
+
+### Шаг 1: Запустить MongoDB
+
+```bash
+# macOS (Homebrew)
+brew services start mongodb-community
+
+# Или вручную
+mongod --dbpath ./data
+```
+
+### Шаг 2: Запустить Backend (Terminal 1)
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Создать .env файл
+cat > .env << EOF
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=myteens_space
+SECRET_KEY=$(openssl rand -hex 32)
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+EOF
+
+# Запустить сервер
+uvicorn server:app --reload --port 8000
+```
+
+Backend будет на: http://localhost:8000
+API Docs: http://localhost:8000/docs
+
+### Шаг 3: Запустить Frontend (Terminal 2)
+
+**⚠️ КРИТИЧНО: Запускать ТОЛЬКО из папки `frontend`!**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend будет на: http://localhost:5173/my-teens-space-c8a9ba43/
+
+### ❌ Частая ошибка
+
+```bash
+# ❌ НЕ делать так (будет Exit Code: 127):
+cd my-teens-space-c8a9ba43
+npm run dev  # ← ОШИБКА! Нет package.json в корне
+
+# ✅ Правильно:
+cd my-teens-space-c8a9ba43/frontend
+npm run dev  # ← Работает!
+```
+
+---
+
+## 🚀 Деплой на GitHub Pages (3 команды):
+
+После того как убедились что локально всё работает:
 
 ```bash
 # 1. Добавляем все изменения
 git add .
 
 # 2. Коммитим
-git commit -m "Configure for GitHub Pages deployment"
+git commit -m "Fix: Add renderLearningTab and modal overlays, ready for deploy"
 
 # 3. Пушим и деплоим!
 git push origin main

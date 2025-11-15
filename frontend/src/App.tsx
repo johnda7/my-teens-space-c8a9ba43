@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import RoleSelection from "./pages/RoleSelection";
 import NotFound from "./pages/NotFound";
 import { RiveTest } from "./pages/RiveTest";
+// import ReplikaTest from "./pages/ReplikaTest";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,8 @@ const App = () => {
             
             {/* Тестовая страница для Rive анимации */}
             <Route path="/rive-test" element={<RiveTest />} />
+            {/* Экспериментальный чатовый экран временно отключен, чтобы не путать пользователей */}
+            {/* <Route path="/replika-test" element={<ReplikaTest />} /> */}
             
             <Route path="*" element={<NotFound />} />
           </Routes>

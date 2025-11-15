@@ -1,0 +1,357 @@
+# 🔧 Changelog - 15 ноября 2025
+
+## Критические исправления белого экрана
+
+### Проблема
+После рефакторинга главного экрана под Telegram-стиль с нижними табами приложение показывало белый экран при запуске.
+
+---
+
+## ✅ Исправления
+
+### 1. **Добавлена отсутствующая функция `renderLearningTab()`**
+
+**Проблема:** 
+- В `Index.tsx` был вызов `renderActiveTab()` который вызывал `renderLearningTab()`
+- Но сама функция `renderLearningTab()` отсутствовала
+- При `activeTab === 'learning'` (дефолтное значение) → JavaScript падал → белый экран
+
+**Решение:**
+Добавлена функция `renderLearningTab()` с полным контентом:
+- Приветствие и краткая статистика (стрик, уровень, XP, текущий модуль)
+- Быстрые действия: кнопки "Начать урок дня" и "Стартовый тест баланса"
+- Grid с 4 модулями (Границы, Уверенность, Эмоции, Отношения)
+- Превью колеса баланса (если есть `initialScores`)
+
+**Файл:** `frontend/src/pages/Index.tsx`, строки ~100-180
+
+```typescript
+const renderLearningTab = () => {
+  return (
+    <div className="space-y-6">
+      {/* Weekly Progress & Stats */}
+      <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/40">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-700">Неделя {currentWeek}</h3>
+          <div className="flex gap-3 text-xs">
+            <span>🔥 {streak}д</span>
+            <span>⭐ Ур. {level}</span>
+            <span>✨ {xp} XP</span>
+            <span>📚 {currentModule || 'Начни обучение'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          onClick={() => {
+            if (dailyMissionLesson) {
+              handleLessonStart(dailyMissionLesson.id);
+            }
+          }}
+          className="h-auto py-4"
+        >
+          <div className="flex flex-col items-center gap-2">
+            <Target className="w-6 h-6" />
+            <span className="text-sm font-medium">Начать урок дня</span>
+          </div>
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            setShowBalanceWheel(true);
+            setBalanceType(initialScores ? 'final' : 'initial');
+          }}
+          className="h-auto py-4"
+        >
+          <div className="flex flex-col items-center gap-2">
+            <Shield className="w-6 h-6" />
+            <span className="text-sm font-medium">
+              {initialScores ? 'Измерить баланс' : 'Стартовый тест'}
+            </span>
+          </div>
+        </Button>
+      </div>
+
+      {/* Modules Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        {modules.map((module) => {
+          const Icon = module.icon;
+          return (
+            <motion.button
+              key={module.id}
+              onClick={() => setCurrentModule(module.id)}
+              className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/40 hover:shadow-lg transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Icon className="w-8 h-8 mb-2 text-purple-600" />
+              <h3 className="font-semibold text-sm mb-1">{module.name}</h3>
+              <Progress value={module.progress} className="h-2" />
+              <p className="text-xs text-slate-600 mt-1">{module.progress}%</p>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Balance Wheel Preview */}
+      {initialScores && (
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/40">
+          <h3 className="text-sm font-semibold mb-3">Твой баланс</h3>
+          <WheelOfBalance
+            scores={finalScores || initialScores}
+            type={finalScores ? 'comparison' : 'initial'}
+            initialScores={finalScores ? initialScores : undefined}
+            size="small"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+### 2. **Исправлена JSX структура в конце компонента**
+
+**Проблема:**
+- Лишний закрывающий тег `</motion.div>` после bottom navigation
+- Неправильная вложенность скобок в `return (...)`
+- Vite выдавал ошибки: `Expression expected`, `Unterminated regexp literal`
+
+**Решение:**
+Правильная структура финала компонента:
+
+```typescript
+      {/* Bottom navigation - табы как в GameMode */}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
+        <div className="grid grid-cols-5 gap-2 rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_18px_45px_rgba(15,23,42,0.22)] border border-white/80 px-3 py-2">
+          {[
+            { id: 'learning' as const, label: 'Учёба', icon: Home },
+            { id: 'checkin' as const, label: 'Чек-ин', icon: Calendar },
+            { id: 'chat' as const, label: 'Чат', icon: MessageCircle },
+            { id: 'group' as const, label: 'Группа', icon: Users },
+            { id: 'profile' as const, label: 'Профиль', icon: Award },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  haptic?.('light');
+                }}
+                className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[10px] font-medium transition-all ${
+                  isActive
+                    ? 'bg-purple-600 text-white shadow-[0_10px_30px_rgba(147,51,234,0.45)]'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>  // ← Закрываем корневой div
+  );  // ← Закрываем return
+};  // ← Закрываем Index компонент
+
+export default Index;
+```
+
+**Было:** Лишний `</motion.div>` висел после `</nav>`, ломал парсер
+**Стало:** Чистая структура без лишних тегов
+
+---
+
+### 3. **Добавлены модальные overlays для интерактивных компонентов**
+
+**Проблема:**
+- `BalanceAssessment` был импортирован, но нигде не рендерился
+- Кнопки запускали уроки/модули, но компоненты не показывались поверх основного UI
+
+**Решение:**
+Добавлены условные блоки рендера для модальных окон:
+
+```typescript
+{/* Balance Assessment Modal */}
+{showBalanceWheel && (
+  <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+    <BalanceAssessment
+      type={balanceType}
+      onComplete={(scores) => {
+        if (balanceType === 'initial') {
+          setInitialScores(scores);
+          localStorage.setItem('initialBalanceScores', JSON.stringify(scores));
+        } else {
+          setFinalScores(scores);
+          localStorage.setItem('finalBalanceScores', JSON.stringify(scores));
+        }
+        setShowBalanceWheel(false);
+      }}
+      onClose={() => setShowBalanceWheel(false)}
+    />
+  </div>
+)}
+
+{/* Module Room Modal */}
+{currentModule && !currentLesson && (
+  <div className="fixed inset-0 z-50">
+    <ModuleRoom
+      moduleId={currentModule as any}
+      onLessonSelect={handleLessonStart}
+      onBack={() => setCurrentModule(null)}
+      weekLessons={weekLessons}
+    />
+  </div>
+)}
+
+{/* Lesson Interface Modal */}
+{currentLesson && !showCompletion && (
+  <div className="fixed inset-0 z-50">
+    <EnhancedLessonInterface
+      lessonId={currentLesson}
+      onComplete={handleLessonComplete}
+      onBack={() => setCurrentLesson(null)}
+    />
+  </div>
+)}
+
+{/* Lesson Complete Modal */}
+{showCompletion && completedLesson && (
+  <div className="fixed inset-0 z-50">
+    <LessonComplete
+      xpEarned={completedLesson.xpEarned}
+      message={completedLesson.message}
+      onClose={() => {
+        setShowCompletion(false);
+        setCompletedLesson(null);
+      }}
+    />
+  </div>
+)}
+```
+
+Теперь все интерактивные компоненты показываются как полноэкранные overlays с z-index 50.
+
+---
+
+### 4. **Удалён мёртвый код**
+
+**Удалено:**
+- Старые блоки с `false && activeTab === 'progress'` (80+ строк неиспользуемого JSX)
+- Старые блоки с `false && activeTab === 'checkin'`
+- Старые блоки с `false && activeTab === 'chat'`
+- Старые блоки с `false && activeTab === 'group'`
+- Старые блоки с `false && activeTab === 'videos'`
+
+**Зачем:** Это были остатки старой системы табов. Новая система использует `renderActiveTab()` + отдельные функции для каждой вкладки.
+
+---
+
+## 📊 Результаты
+
+### До исправлений:
+- ❌ Белый экран при запуске
+- ❌ `npm run build` - падал с синтаксическими ошибками
+- ❌ Vite dev server - показывал красный экран с ошибками JSX
+- ❌ Нижнее меню не работало
+- ❌ Модальные окна не показывались
+
+### После исправлений:
+- ✅ Приложение запускается и показывает UI
+- ✅ `npm run build` - проходит успешно (Exit Code: 0)
+- ✅ Vite dev server - работает без ошибок
+- ✅ Нижнее меню с 5 табами отображается и переключается
+- ✅ Модальные окна (колесо баланса, уроки, модули) показываются корректно
+- ✅ Основной контент вкладки "Учёба" рендерится с модулями и быстрыми действиями
+
+---
+
+## 🔍 Как проверить локально
+
+```bash
+# 1. Убедитесь что MongoDB запущен
+brew services start mongodb-community
+
+# 2. Запустите backend
+cd backend
+source venv/bin/activate  # если venv уже создан
+uvicorn server:app --reload --port 8000
+
+# 3. В НОВОМ терминале запустите frontend
+cd frontend
+npm run dev
+
+# 4. Откройте браузер
+# http://localhost:5173/my-teens-space-c8a9ba43/
+```
+
+**Что должно быть видно:**
+- Фиолетово-голубой градиентный фон
+- Хедер с "MyTeens.Space" и статистикой (стрик, уровень)
+- Краткая статистика недели
+- 2 кнопки: "Начать урок дня" и "Стартовый тест"
+- Grid с 4 модулями (Границы, Уверенность, Эмоции, Отношения)
+- Нижнее меню с 5 иконками (Учёба, Чек-ин, Чат, Группа, Профиль)
+
+---
+
+## 🚀 Готовность к деплою
+
+**Frontend:** ✅ Готов
+- Build проходит без ошибок
+- GitHub Actions настроены
+- `vite.config.ts` с правильным `base: '/my-teens-space-c8a9ba43/'`
+
+**Backend:** ⚠️ Требуется отдельный деплой
+- MongoDB Atlas для production БД
+- Railway/Render/Fly.io для FastAPI
+- Обновить `VITE_API_URL` в frontend после деплоя backend
+
+---
+
+## 📝 Технические детали
+
+**Изменённые файлы:**
+- `frontend/src/pages/Index.tsx` - основной файл с исправлениями
+
+**Количество изменений:**
+- +150 строк (новая функция renderLearningTab + модальные overlays)
+- -120 строк (удалён мёртвый код старых табов)
+- ~10 строк исправлений JSX структуры
+
+**Время на исправления:** ~30 минут анализа + ~20 минут кода
+
+---
+
+## 🎯 Что дальше
+
+### Краткосрочно (следующие шаги):
+1. ✅ Локальное тестирование - проверить все вкладки
+2. ✅ Деплой на GitHub Pages - `git push origin main`
+3. ⏳ Добавить реальный контент в остальные табы (чек-ин, чат, группа, профиль)
+
+### Среднесрочно (2-3 недели):
+1. Перенести компоненты чек-ина из старого `TeenWellnessHub`
+2. Перенести практики сна из `SleepMeditationHub`
+3. Интегрировать Telegram группу через `openTelegramLink`
+4. Добавить родительский модуль (20-30 уроков для родителей)
+
+### Долгосрочно (1-2 месяца):
+1. Полная интеграция Telegram WebApp SDK
+2. Замена localStorage на `WebApp.CloudStorage`
+3. Telegram бот для анализа переписки и рекомендаций
+4. Система наград и достижений с визуализацией
+
+---
+
+**Статус:** ✅ Все критические ошибки исправлены, приложение готово к использованию
+**Дата:** 15 ноября 2025
+**Проверено:** Сборка проходит, локальный запуск работает

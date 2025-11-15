@@ -46,41 +46,58 @@ const ModuleRoom = ({
   const themeConfig = ROOM_THEMES[theme];
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Background with Pattern */}
-      <div className="absolute inset-0">
-        <div 
-          className="absolute inset-0 opacity-5"
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
+      {/* Animated Background Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-20"
           style={{
-            backgroundImage: `url(${themeConfig.bgPattern})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            background: `linear-gradient(135deg, ${
+              theme === 'boundaries' ? '#a855f7, #ec4899' :
+              theme === 'confidence' ? '#eab308, #f97316' :
+              theme === 'emotions' ? '#3b82f6, #06b6d4' :
+              '#ec4899, #a855f7'
+            })`,
+            top: '-10%',
+            left: '-10%',
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.15, 0.25, 0.15],
+            x: [0, 30, 0],
+            y: [0, -30, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut",
           }}
         />
-        <div className={`absolute inset-0 bg-gradient-to-br ${themeConfig.gradient}`} />
-      </div>
-
-      {/* Animated Particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-white/30 rounded-full"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              y: [null, Math.random() * window.innerHeight],
-              opacity: [0.3, 0.6, 0.3],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        ))}
+        <motion.div
+          className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20"
+          style={{
+            background: `linear-gradient(135deg, ${
+              theme === 'boundaries' ? '#ec4899, #3b82f6' :
+              theme === 'confidence' ? '#f97316, #ef4444' :
+              theme === 'emotions' ? '#06b6d4, #14b8a6' :
+              '#a855f7, #ec4899'
+            })`,
+            bottom: '-10%',
+            right: '-10%',
+          }}
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.2, 0.15, 0.2],
+            x: [0, -30, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 5,
+          }}
+        />
       </div>
 
       {/* Content */}
@@ -92,37 +109,56 @@ const ModuleRoom = ({
           className="p-6 md:p-8"
         >
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-4 mb-4">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                className={`w-20 h-20 rounded-3xl bg-background/80 backdrop-blur-sm flex items-center justify-center ${themeConfig.accentColor}`}
-              >
-                {icon}
-              </motion.div>
-              <div className="flex-1">
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                  {title}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {description}
-                </p>
+            {/* Glassmorphism Header Card */}
+            <div className="bg-white/70 backdrop-blur-[40px] rounded-3xl p-6 border border-white/20 shadow-[0_20px_60px_-25px_rgba(79,70,229,0.25)]">
+              <div className="flex items-center gap-4 mb-4">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${
+                      theme === 'boundaries' ? '#a855f7, #ec4899' :
+                      theme === 'confidence' ? '#eab308, #f97316' :
+                      theme === 'emotions' ? '#3b82f6, #06b6d4' :
+                      '#ec4899, #a855f7'
+                    })`,
+                  }}
+                >
+                  {icon}
+                </motion.div>
+                <div className="flex-1">
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 ios-headline">
+                    {title}
+                  </h1>
+                  <p className="text-sm text-gray-600 ios-body">
+                    {description}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Progress Bar */}
-            <div className="relative h-3 bg-background/50 rounded-full overflow-hidden backdrop-blur-sm">
-              <motion.div
-                className={`h-full bg-gradient-to-r ${themeConfig.gradient.replace('/20', '')}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-bold text-foreground drop-shadow-sm">
-                  {progress}%
-                </span>
+              {/* Progress Bar */}
+              <div className="relative h-3 bg-gray-200/50 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full"
+                  style={{
+                    background: `linear-gradient(to right, ${
+                      theme === 'boundaries' ? '#a855f7, #ec4899' :
+                      theme === 'confidence' ? '#eab308, #f97316' :
+                      theme === 'emotions' ? '#3b82f6, #06b6d4' :
+                      '#ec4899, #a855f7'
+                    })`,
+                  }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 1.5, ease: "easeOut", type: "spring", stiffness: 400, damping: 17 }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold text-gray-900 drop-shadow-sm">
+                    {progress}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>

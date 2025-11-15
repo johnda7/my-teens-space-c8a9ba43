@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Home, Calendar, MessageCircle, Users, Video, Award, Target, Shield, Heart, Brain, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Home, Calendar, MessageCircle, Users, Award, Target, Shield, Heart, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
@@ -17,8 +18,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/game.css';
 
 const Index = () => {
+  const navigate = useNavigate();
   const { haptic, isInTelegram, user } = useTelegram();
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState<'learning' | 'checkin' | 'chat' | 'group' | 'profile'>('learning');
   const [currentModule, setCurrentModule] = useState<string | null>(null);
   const [currentLesson, setCurrentLesson] = useState<string | null>(null);
   const [showCompletion, setShowCompletion] = useState(false);
@@ -41,11 +43,8 @@ const Index = () => {
     const savedInitialScores = localStorage.getItem('initialBalanceScores');
     if (savedInitialScores) {
       setInitialScores(JSON.parse(savedInitialScores));
-    } else {
-      // Показываем колесо баланса при первом запуске
-      setShowBalanceWheel(true);
-      setBalanceType('initial');
     }
+    // Не форсим колесо баланса на первом экране — запускаем его по кнопке
   }, []);
 
   const getModuleWeekLessons = () => {
@@ -61,6 +60,11 @@ const Index = () => {
   };
 
   const weekLessons = getModuleWeekLessons();
+
+  // Простейшая логика "миссии дня": первый урок первого модуля
+  const dailyMissionLesson = COMPLETE_LESSONS.find(
+    (lesson) => lesson.module === 'boundaries'
+  );
 
   const modules = [
     { id: 'boundaries', name: 'Границы', icon: Shield, theme: 'boundaries' as const, progress: 25 },
@@ -79,135 +83,243 @@ const Index = () => {
     setCompletedLesson({ xpEarned, message: lesson?.completionMessage || 'Отлично!' });
     setCurrentLesson(null);
     setShowCompletion(true);
-    
-    // Проверяем, завершен ли последний урок последнего модуля
-    const allModulesComplete = modules.every(m => m.progress >= 100);
-    if (allModulesComplete && initialScores && !finalScores) {
-      // Показываем финальное колесо баланса
-      setTimeout(() => {
-        setShowBalanceWheel(true);
-        setBalanceType('final');
-      }, 2000);
-    }
-  };
-  
-  const handleBalanceComplete = (scores: Record<string, number>, answers: Record<string, string>) => {
-    if (balanceType === 'initial') {
-      setInitialScores(scores);
-      localStorage.setItem('initialBalanceScores', JSON.stringify(scores));
-      localStorage.setItem('initialBalanceAnswers', JSON.stringify(answers));
-    } else {
-      setFinalScores(scores);
-      localStorage.setItem('finalBalanceScores', JSON.stringify(scores));
-      localStorage.setItem('finalBalanceAnswers', JSON.stringify(answers));
-    }
-    setShowBalanceWheel(false);
   };
 
-  const handleContinueAfterCompletion = () => {
-    setShowCompletion(false);
-    setCompletedLesson(null);
-  };
-
-  // If showing balance assessment
-  if (showBalanceWheel) {
+  const renderLearningTab = () => {
     return (
-      <BalanceAssessment 
-        onComplete={handleBalanceComplete}
-        type={balanceType}
-      />
-    );
-  }
-  
-  // If showing lesson
-  if (currentLesson) {
-    const lesson = COMPLETE_LESSONS.find(l => l.id === currentLesson);
-    if (lesson) {
-      // Стандартный интерфейс урока
-      return (
-        <EnhancedLessonInterface
-          questions={lesson.questions}
-          onComplete={handleLessonComplete}
-          onExit={() => setCurrentLesson(null)}
-          lessonTitle={lesson.title}
-          xpReward={lesson.xp}
-        />
-      );
-    }
-  }
-
-  // If showing completion
-  if (showCompletion && completedLesson) {
-    return (
-      <LessonComplete
-        xpEarned={completedLesson.xpEarned}
-        message={completedLesson.message}
-        onContinue={handleContinueAfterCompletion}
-      />
-    );
-  }
-
-  // If in module room
-  if (currentModule) {
-    const module = modules.find(m => m.id === currentModule);
-    if (module) {
-      const Icon = module.icon;
-      return (
-        <div className="min-h-screen">
-          <ModuleRoom
-            title={module.name}
-            description={`Твой путь к пониманию ${module.name.toLowerCase()}`}
-            icon={<Icon className="w-12 h-12" />}
-            theme={module.theme}
-            progress={module.progress}
+      <div className="space-y-6">
+        {/* Миссия дня */}
+        {dailyMissionLesson && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/80 backdrop-blur-sm p-5 rounded-3xl shadow-lg border border-white/60"
           >
-            <div className="max-w-4xl mx-auto">
-              <Button 
-                onClick={() => setCurrentModule(null)}
-                variant="outline"
-                className="mb-6"
-              >
-                ← Назад к модулям
-              </Button>
-              <LearningPath
-                lessons={weekLessons}
-                currentLessonIndex={1}
-                onLessonStart={handleLessonStart}
-                weekNumber={currentWeek}
-              />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Target className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Миссия дня</h3>
+                <p className="text-xs text-slate-600">+{dailyMissionLesson.xp} XP</p>
+              </div>
             </div>
-          </ModuleRoom>
+            <p className="text-sm text-slate-700 mb-3">{dailyMissionLesson.title}</p>
+            <Button
+              onClick={() => handleLessonStart(dailyMissionLesson.id)}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              Начать урок
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Quick stats */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl text-center">
+            <div className="text-2xl mb-1">🔥</div>
+            <div className="text-xs text-slate-600">Стрик</div>
+            <div className="text-lg font-bold text-slate-900">{streak}</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl text-center">
+            <div className="text-2xl mb-1">⭐</div>
+            <div className="text-xs text-slate-600">Уровень</div>
+            <div className="text-lg font-bold text-slate-900">{level}</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl text-center">
+            <div className="text-2xl mb-1">📚</div>
+            <div className="text-xs text-slate-600">Модуль</div>
+            <div className="text-lg font-bold text-slate-900">{currentModule || 'N/A'}</div>
+          </div>
         </div>
-      );
+
+        {/* Quick actions */}
+        <div className="space-y-2">
+          <Button
+            variant="outline"
+            className="w-full justify-start bg-white/80 backdrop-blur-sm"
+            onClick={() => {
+              if (!initialScores) {
+                setShowBalanceWheel(true);
+                setBalanceType('initial');
+              } else {
+                setShowBalanceWheel(true);
+                setBalanceType('final');
+              }
+            }}
+          >
+            {!initialScores ? '🎯 Стартовый тест баланса' : '📊 Измерить баланс'}
+          </Button>
+        </div>
+
+        {/* Модули */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-slate-900">Модули обучения</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {modules.map((module) => {
+              const Icon = module.icon;
+              return (
+                <motion.div
+                  key={module.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setCurrentModule(module.id)}
+                  className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <Icon className="w-6 h-6 text-purple-600 mb-2" />
+                  <h4 className="text-sm font-semibold text-slate-900 mb-1">{module.name}</h4>
+                  <div className="flex items-center gap-2">
+                    <Progress value={module.progress} className="h-1 flex-1" />
+                    <span className="text-xs text-slate-600">{module.progress}%</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Колесо баланса preview */}
+        {initialScores && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white/80 backdrop-blur-sm p-4 rounded-3xl"
+          >
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">Твой баланс</h3>
+            <WheelOfBalance
+              scores={finalScores || initialScores}
+              type={finalScores ? 'comparison' : 'initial'}
+              initialScores={finalScores ? initialScores : undefined}
+              size="small"
+            />
+          </motion.div>
+        )}
+      </div>
+    );
+  };
+
+  const renderCheckInTab = () => {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-slate-900">Чек-ин с Катей</h2>
+        <p className="text-xs text-slate-600">
+          Здесь будет ежедневный чек-ин и практики для сна и расслабления, перенесённые из старого приложения.
+        </p>
+      </div>
+    );
+  };
+
+  const renderChatTab = () => {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-slate-900">Чат с Катей</h2>
+        <p className="text-xs text-slate-600">
+          Сюда добавим живой диалог с Катей и быстрые подсказки.
+        </p>
+      </div>
+    );
+  };
+
+  const renderGroupTab = () => {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-slate-900">Группа</h2>
+        <p className="text-xs text-slate-600">
+          Здесь будет доступ к Telegram-группе и эфиром. Можно будет открыть чат прямо из приложения.
+        </p>
+      </div>
+    );
+  };
+
+  const renderProfileTab = () => {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-slate-900">Профиль и награды</h2>
+        <p className="text-xs text-slate-600">
+          Здесь будут твои бейджи, прогресс по модулям и настройки.
+        </p>
+      </div>
+    );
+  };
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'learning':
+        return renderLearningTab();
+      case 'checkin':
+        return renderCheckInTab();
+      case 'chat':
+        return renderChatTab();
+      case 'group':
+        return renderGroupTab();
+      case 'profile':
+        return renderProfileTab();
+      default:
+        return renderLearningTab();
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 pb-20">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 pb-20 relative overflow-hidden">
+      {/* Animated background orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-0 left-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1],
+            x: [0, 50, 0],
+            y: [0, 30, 0]
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.15, 0.1, 0.15],
+            x: [0, -30, 0],
+            y: [0, 50, 0]
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 5
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.1, 0.15, 0.1],
+            x: [0, -40, 0],
+            y: [0, -20, 0]
+          }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 10
+          }}
+        />
+      </div>
+
+      {/* Header with glassmorphism */}
       <motion.div 
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ 
           type: "spring", 
-          stiffness: 120,
-          damping: 20
+          stiffness: 400,
+          damping: 17
         }}
-        className="relative bg-gradient-to-r from-primary via-secondary to-accent p-6 text-white shadow-2xl sticky top-0 z-40 overflow-hidden"
+        className="relative bg-white/70 backdrop-blur-[40px] p-6 text-gray-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sticky top-0 z-40 border-b border-white/20"
       >
-        {/* Animated background particles */}
-        <motion.div 
-          className="absolute inset-0 opacity-20"
-          animate={{
-            background: [
-              "radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)",
-              "radial-gradient(circle at 80% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)",
-              "radial-gradient(circle at 50% 80%, rgba(255,255,255,0.3) 0%, transparent 50%)",
-              "radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)",
-            ]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
         
         <div className="relative flex items-center justify-between mb-4">
           <motion.div
@@ -336,189 +448,41 @@ const Index = () => {
       {/* Main Content */}
       <div className="p-4">
         <AnimatePresence mode="wait">
-          {activeTab === 'home' && (
-            <motion.div
-              key="home"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="space-y-6"
-            >
-              {/* Modules Grid */}
+          {/* Header with glassmorphism */}
+          <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{
+              type: 'spring',
+              stiffness: 400,
+              damping: 17,
+            }}
+            className="relative bg-white/70 backdrop-blur-[40px] px-4 pt-4 pb-3 text-gray-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sticky top-0 z-40 border-b border-white/20"
+          >
+            <div className="relative flex items-center justify-between">
               <div>
-                <div className="flex justify-between items-center mb-6">
-                  <motion.h2 
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    className="text-3xl font-bold text-foreground"
-                  >
-                    Модули обучения
-                  </motion.h2>
-                  {/* Animated Katya v2.0 */}
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 200, 
-                      damping: 15,
-                      delay: 0.5 
-                    }}
-                  >
-                    <AnimatedKatyaV2 
-                      mood="default"
-                      message={user?.first_name ? `Привет, ${user.first_name}!` : "Привет! Начнем?"}
-                      className="w-24 h-24"
-                      animate={true}
-                    />
-                  </motion.div>
-                </div>
-                <div className="grid grid-cols-2 gap-5">
-                  {modules.map((module, index) => {
-                    const Icon = module.icon;
-                    return (
-                      <motion.button
-                        key={module.id}
-                        initial={{ scale: 0, rotate: -180, opacity: 0 }}
-                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                        transition={{ 
-                          delay: index * 0.1, 
-                          type: "spring",
-                          stiffness: 180,
-                          damping: 12
-                        }}
-                        whileHover={{ 
-                          scale: 1.05, 
-                          y: -10,
-                          transition: { type: "spring", stiffness: 300 }
-                        }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => {
-                          if (haptic) haptic.light();
-                          setCurrentModule(module.id);
-                        }}
-                        className="group relative bg-card p-6 rounded-3xl shadow-xl border-2 border-border hover:border-primary/50 transition-all duration-300 overflow-hidden"
-                      >
-                        {/* Animated gradient background */}
-                        <motion.div
-                          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                            module.theme === 'boundaries' ? 'bg-gradient-to-br from-purple-500/10 to-pink-500/10' :
-                            module.theme === 'confidence' ? 'bg-gradient-to-br from-yellow-500/10 to-orange-500/10' :
-                            module.theme === 'emotions' ? 'bg-gradient-to-br from-blue-500/10 to-cyan-500/10' :
-                            'bg-gradient-to-br from-pink-500/10 to-rose-500/10'
-                          }`}
-                        />
-                        
-                        {/* Shimmer effect on hover */}
-                        <motion.div
-                          className="absolute inset-0 bg-shimmer-gradient opacity-0 group-hover:opacity-100"
-                          initial={{ x: "-100%" }}
-                          whileHover={{ x: "100%" }}
-                          transition={{ duration: 0.6 }}
-                        />
-                        
-                        <div className="relative flex flex-col items-center gap-3">
-                          <motion.div 
-                            className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg relative ${
-                              module.theme === 'boundaries' ? 'bg-gradient-to-br from-purple-500/30 to-pink-500/30' :
-                              module.theme === 'confidence' ? 'bg-gradient-to-br from-yellow-500/30 to-orange-500/30' :
-                              module.theme === 'emotions' ? 'bg-gradient-to-br from-blue-500/30 to-cyan-500/30' :
-                              'bg-gradient-to-br from-pink-500/30 to-rose-500/30'
-                            }`}
-                            whileHover={{ 
-                              rotate: [0, -8, 8, -8, 0],
-                              scale: 1.15
-                            }}
-                            transition={{ 
-                              rotate: { duration: 0.5 },
-                              scale: { type: "spring", stiffness: 300 }
-                            }}
-                          >
-                            <motion.div
-                              className="absolute inset-0 rounded-3xl bg-white/20"
-                              animate={{ 
-                                scale: [1, 1.1, 1],
-                                opacity: [0.5, 0, 0.5]
-                              }}
-                              transition={{ 
-                                duration: 2, 
-                                repeat: Infinity,
-                                delay: index * 0.2
-                              }}
-                            />
-                            <Icon className="w-10 h-10 text-primary relative z-10" />
-                          </motion.div>
-                          <motion.h3 
-                            className="font-bold text-lg text-foreground"
-                            whileHover={{ scale: 1.05 }}
-                          >
-                            {module.name}
-                          </motion.h3>
-                          <div className="w-full">
-                            <div className="relative">
-                              <Progress value={module.progress} className="w-full h-3 mb-2" />
-                              {module.progress > 0 && (
-                                <motion.div
-                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
-                                  animate={{ x: ["-100%", "100%"] }}
-                                  transition={{ 
-                                    duration: 1.5, 
-                                    repeat: Infinity,
-                                    repeatDelay: 2
-                                  }}
-                                />
-                              )}
-                            </div>
-                            <motion.span 
-                              className="text-sm font-semibold text-muted-foreground"
-                              key={module.progress}
-                              initial={{ scale: 1.2 }}
-                              animate={{ scale: 1 }}
-                            >
-                              {module.progress}%
-                            </motion.span>
-                          </div>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                <p className="text-[11px] text-slate-500 mb-0.5">Сегодня</p>
+                <h1 className="text-lg font-semibold text-slate-900">
+                  {user?.first_name ? `${user.first_name}, привет!` : 'Привет!'}
+                </h1>
+                <p className="text-[12px] text-slate-600">
+                  Можно зайти в урок, сделать чек-ин или заглянуть в группу.
+                </p>
               </div>
+              <div className="w-16 h-16 relative hidden sm:block">
+                <AnimatedKatyaV2 />
+              </div>
+            </div>
+          </motion.div>
 
-              {/* Quick Stats */}
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="bg-card p-6 rounded-3xl shadow-lg border border-border"
-              >
-                <h3 className="text-lg font-bold text-foreground mb-4">Твой прогресс</h3>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">{streak}</div>
-                    <div className="text-xs text-muted-foreground">Дней подряд</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-secondary">{xp}</div>
-                    <div className="text-xs text-muted-foreground">Всего XP</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-accent">{level}</div>
-                    <div className="text-xs text-muted-foreground">Уровень</div>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => window.location.href = '/parent'}
-                >
-                  👨‍👩‍👧 Кабинет родителя
-                </Button>
-              </motion.div>
-            </motion.div>
-          )}
+          <main className="relative z-10 px-4 pt-4 pb-24 max-w-3xl mx-auto">
+            {renderActiveTab()}
+          </main>
 
-          {activeTab === 'progress' && (
+          {/* NOTE: legacy tab-specific content below is obsolete and will be removed in favor of renderActiveTab; keep only if needed. */}
+
+          {/* Example of old 'progress' tab content (no longer used) */}
+          {false && activeTab === 'progress' && (
             <motion.div
               key="progress"
               initial={{ opacity: 0, x: -20 }}
@@ -572,7 +536,7 @@ const Index = () => {
             </motion.div>
           )}
 
-          {activeTab === 'checkin' && (
+          {false && activeTab === 'checkin' && (
             <motion.div
               key="checkin"
               initial={{ opacity: 0, x: -20 }}
@@ -627,7 +591,7 @@ const Index = () => {
             </motion.div>
           )}
 
-          {activeTab === 'chat' && (
+          {false && activeTab === 'chat' && (
             <motion.div
               key="chat"
               initial={{ opacity: 0, x: -20 }}
@@ -661,7 +625,7 @@ const Index = () => {
             </motion.div>
           )}
 
-          {activeTab === 'group' && (
+          {false && activeTab === 'group' && (
             <motion.div
               key="group"
               initial={{ opacity: 0, x: -20 }}
@@ -682,7 +646,7 @@ const Index = () => {
             </motion.div>
           )}
 
-          {activeTab === 'videos' && (
+          {false && activeTab === 'videos' && (
             <motion.div
               key="videos"
               initial={{ opacity: 0, x: -20 }}
@@ -720,65 +684,88 @@ const Index = () => {
         </AnimatePresence>
       </div>
 
-      {/* Bottom Navigation */}
-      <motion.div 
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 100 }}
-        className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t-4 border-primary/20 shadow-2xl z-50"
-      >
-        <div className="flex justify-around p-2">
+      {/* Модальные окна и оверлеи */}
+      <AnimatePresence>
+        {showBalanceWheel && (
+          <BalanceAssessment
+            type={balanceType}
+            onComplete={(scores) => {
+              if (balanceType === 'initial') {
+                setInitialScores(scores);
+                localStorage.setItem('initialBalanceScores', JSON.stringify(scores));
+              } else {
+                setFinalScores(scores);
+                localStorage.setItem('finalBalanceScores', JSON.stringify(scores));
+              }
+              setShowBalanceWheel(false);
+            }}
+            onClose={() => setShowBalanceWheel(false)}
+          />
+        )}
+
+        {currentModule && !currentLesson && (
+          <ModuleRoom
+            moduleId={currentModule}
+            lessons={weekLessons}
+            onLessonSelect={handleLessonStart}
+            onClose={() => setCurrentModule(null)}
+            currentWeek={currentWeek}
+            onWeekChange={setCurrentWeek}
+          />
+        )}
+
+        {currentLesson && (
+          <EnhancedLessonInterface
+            lesson={COMPLETE_LESSONS.find(l => l.id === currentLesson)!}
+            onComplete={handleLessonComplete}
+            onClose={() => setCurrentLesson(null)}
+          />
+        )}
+
+        {showCompletion && completedLesson && (
+          <LessonComplete
+            xpEarned={completedLesson.xpEarned}
+            message={completedLesson.message}
+            onContinue={() => {
+              setShowCompletion(false);
+              setCompletedLesson(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Bottom navigation - табы как в GameMode */}
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
+        <div className="grid grid-cols-5 gap-2 rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_18px_45px_rgba(15,23,42,0.22)] border border-white/80 px-3 py-2">
           {[
-            { id: 'home', icon: Home, label: 'Главная' },
-            { id: 'progress', icon: TrendingUp, label: 'Прогресс' },
-            { id: 'checkin', icon: Calendar, label: 'Чек-ин' },
-            { id: 'chat', icon: MessageCircle, label: 'Чат' },
-            { id: 'videos', icon: Video, label: 'Видео' },
-          ].map((tab, index) => (
-            <motion.button
-              key={tab.id}
+            { id: 'learning' as const, label: 'Учёба', icon: Home },
+            { id: 'checkin' as const, label: 'Чек-ин', icon: Calendar },
+            { id: 'chat' as const, label: 'Чат', icon: MessageCircle },
+            { id: 'group' as const, label: 'Группа', icon: Users },
+            { id: 'profile' as const, label: 'Профиль', icon: Award },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
                 onClick={() => {
-                  haptic?.light();
-                  setActiveTab(tab.id);
+                  setActiveTab(item.id);
+                  haptic?.('light');
                 }}
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.1, y: -5 }}
-              whileTap={{ scale: 0.9 }}
-              className={`flex flex-col items-center gap-1 px-3 py-3 rounded-2xl transition-all relative ${
-                activeTab === tab.id
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <AnimatePresence>
-                {activeTab === tab.id && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute inset-0 bg-primary/10 rounded-2xl"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                )}
-              </AnimatePresence>
-              <motion.div
-                animate={activeTab === tab.id ? { 
-                  y: [0, -3, 0],
-                  scale: [1, 1.1, 1]
-                } : {}}
-                transition={{ duration: 0.3 }}
-                className="relative z-10"
+                className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[10px] font-medium transition-all ${
+                  isActive
+                    ? 'bg-purple-600 text-white shadow-[0_10px_30px_rgba(147,51,234,0.45)]'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
               >
-                <tab.icon className="w-6 h-6" />
-              </motion.div>
-              <span className="text-xs font-semibold relative z-10">{tab.label}</span>
-            </motion.button>
-          ))}
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
-      </motion.div>
+      </nav>
     </div>
   );
 };
