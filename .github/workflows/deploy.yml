@@ -38,9 +38,8 @@ jobs:
           cd frontend
           rm -rf dist
           npm run build
-          # Copy 404.html for SPA routing
-          cp dist/index.html dist/404.html
-          # Add .nojekyll to prevent GitHub from processing as Jekyll
+          # 404.html already copied from public/ during build
+          # Just ensure .nojekyll exists to prevent GitHub from processing as Jekyll
           touch dist/.nojekyll
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://your-backend-url.com' }}
