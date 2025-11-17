@@ -50,14 +50,20 @@ const App = () => {
   // Используем basename только на GitHub Pages
   const basename = window.location.hostname.includes('github.io') 
     ? '/my-teens-space-c8a9ba43' 
-    : undefined;
+    : '/my-teens-space-c8a9ba43'; // Всегда используем basename для согласованности
   
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename={basename}>
+        <BrowserRouter 
+          basename={basename}
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+          }}
+        >
           <Routes>
             {/* Публичные роуты */}
             <Route path="/login" element={<LoginPage />} />
