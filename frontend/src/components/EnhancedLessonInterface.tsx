@@ -68,6 +68,9 @@ const EnhancedLessonInterface = ({
   });
   const [showEncouragement, setShowEncouragement] = useState(false);
   const [encouragementMessage, setEncouragementMessage] = useState('');
+  const [hintsAvailable, setHintsAvailable] = useState(0);
+  const [hintUsed, setHintUsed] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   
   // Mission Checklist для первого урока
   const [missionChecklist, setMissionChecklist] = useState([
@@ -89,6 +92,15 @@ const EnhancedLessonInterface = ({
     if (WebApp?.initDataUnsafe?.user) {
       const firstName = WebApp.initDataUnsafe.user.first_name;
       setUserName(firstName || 'друг');
+    }
+    
+    // Проверить доступные подсказки из инвентаря
+    try {
+      const inventory = JSON.parse(localStorage.getItem('userInventory') || '{}');
+      const hints = inventory.hint_pack || 0;
+      setHintsAvailable(hints);
+    } catch (e) {
+      console.error('Error loading hints:', e);
     }
   }, []);
 
@@ -183,6 +195,31 @@ const EnhancedLessonInterface = ({
       scalar: 1.2
     });
     triggerHaptic('heavy');
+  };
+
+  // Использовать подсказку
+  const useHint = () => {
+    if (hintsAvailable > 0 && !hintUsed && !showHint) {
+      // Уменьшить количество подсказок в инвентаре
+      try {
+        const inventory = JSON.parse(localStorage.getItem('userInventory') || '{}');
+        inventory.hint_pack = Math.max(0, (inventory.hint_pack || 0) - 1);
+        localStorage.setItem('userInventory', JSON.stringify(inventory));
+        
+        setHintsAvailable(prev => prev - 1);
+        setHintUsed(true);
+        setShowHint(true);
+        
+        triggerHaptic('medium');
+        
+        setKatyaMood('support');
+        setKatyaMessage('💡 Подсказка: ' + (question.explanation || 'Подумай о своих чувствах и границах'));
+        
+        console.log('💡 Подсказка использована');
+      } catch (e) {
+        console.error('Error using hint:', e);
+      }
+    }
   };
 
   const handleAnswer = (answer: any) => {
@@ -963,13 +1000,50 @@ const EnhancedLessonInterface = ({
               </div>
 
               <div className="relative">
+              <div className="flex items-start justify-between gap-4 mb-8">
               <motion.h3
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-2xl md:text-3xl font-black bg-gradient-to-r from-purple-700 via-pink-700 to-blue-700 bg-clip-text text-transparent mb-8 text-center leading-relaxed"
+                className="flex-1 text-2xl md:text-3xl font-black bg-gradient-to-r from-purple-700 via-pink-700 to-blue-700 bg-clip-text text-transparent text-center leading-relaxed"
               >
                 {question.question}
               </motion.h3>
+              
+              {/* Кнопка подсказки */}
+              {hintsAvailable > 0 && !hintUsed && !showFeedback && (
+                <motion.button
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={useHint}
+                  className="relative shrink-0 bg-gradient-to-r from-blue-400 to-cyan-500 p-3 rounded-2xl shadow-lg"
+                  title={`Использовать подсказку (${hintsAvailable})`}
+                >
+                  <span className="text-2xl">💡</span>
+                  <div className="absolute -top-1 -right-1 bg-white text-blue-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {hintsAvailable}
+                  </div>
+                </motion.button>
+              )}
+              </div>
+              
+              {/* Показать подсказку */}
+              {showHint && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-2xl"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">💡</span>
+                    <div>
+                      <h4 className="font-bold text-blue-900 mb-1">Подсказка:</h4>
+                      <p className="text-blue-800">{question.explanation || 'Подумай о своих чувствах и границах'}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Gamified Question Types */}
               {question.type === 'interactive-zones' && (

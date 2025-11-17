@@ -9,11 +9,21 @@ interface LessonCompleteProps {
   xpEarned: number;
   message: string;
   onContinue: () => void;
-  xpBoosted?: boolean; // Был ли применен бустер
-  coinsEarned?: number; // Сколько монет получено
+  xpBoosted?: boolean;
+  coinsEarned?: number;
+  nextLessonId?: string; // ID следующего урока
+  onNextLesson?: () => void; // Callback для перехода к следующему уроку
 }
 
-const LessonComplete = ({ xpEarned, message, onContinue, xpBoosted, coinsEarned }: LessonCompleteProps) => {
+const LessonComplete = ({ 
+  xpEarned, 
+  message, 
+  onContinue, 
+  xpBoosted, 
+  coinsEarned,
+  nextLessonId,
+  onNextLesson 
+}: LessonCompleteProps) => {
   useEffect(() => {
     // Confetti animation
     const duration = 3000;
@@ -154,13 +164,33 @@ const LessonComplete = ({ xpEarned, message, onContinue, xpBoosted, coinsEarned 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.5 }}
         >
-          <Button
-            onClick={onContinue}
-            size="lg"
-            className="w-full text-lg"
-          >
-            Продолжить <ArrowRight className="ml-2" />
-          </Button>
+          {nextLessonId && onNextLesson ? (
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={onNextLesson}
+                size="lg"
+                className="w-full text-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+              >
+                Следующий урок <ArrowRight className="ml-2" />
+              </Button>
+              <Button
+                onClick={onContinue}
+                size="lg"
+                variant="outline"
+                className="w-full text-lg"
+              >
+                Вернуться на главную
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={onContinue}
+              size="lg"
+              className="w-full text-lg"
+            >
+              Продолжить <ArrowRight className="ml-2" />
+            </Button>
+          )}
         </motion.div>
       </motion.div>
     </div>

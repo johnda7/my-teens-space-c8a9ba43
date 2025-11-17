@@ -20,6 +20,7 @@ import { Shop, useInventory } from '@/components/Shop';
 import { Achievements, useAchievements } from '@/components/Achievements';
 import { Inventory } from '@/components/Inventory';
 import { ActiveEffects } from '@/components/ActiveEffects';
+import LessonPreview from '@/components/LessonPreview';
 import { useTelegram } from '@/hooks/useTelegram';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -40,6 +41,8 @@ const Index = () => {
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
+  const [showLessonPreview, setShowLessonPreview] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<any>(null);
 
   const [streak, setStreak] = useState(7);
   const [level, setLevel] = useState(3);
@@ -70,6 +73,9 @@ const Index = () => {
       setInitialScores(JSON.parse(savedInitialScores));
     }
     
+    // Проверяем и обновляем streak
+    checkAndUpdateStreak();
+    
     // Проверяем достижения при загрузке
     // Достижение за стрик
     achievementsHook.updateProgress('streak_7', streak);
@@ -79,6 +85,63 @@ const Index = () => {
     achievementsHook.updateProgress('coins_1000', coins);
     
   }, []);
+  
+  // Функция проверки и обновления стрика
+  const checkAndUpdateStreak = () => {
+    const lastActivityDate = localStorage.getItem('lastActivityDate');
+    const today = new Date().toDateString();
+    
+    if (!lastActivityDate) {
+      // Первый запуск - начинаем стрик с 1
+      setStreak(1);
+      localStorage.setItem('lastActivityDate', today);
+      localStorage.setItem('currentStreak', '1');
+      return;
+    }
+    
+    const lastDate = new Date(lastActivityDate);
+    const todayDate = new Date(today);
+    const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      // Сегодня уже был - стрик не меняется
+      const savedStreak = parseInt(localStorage.getItem('currentStreak') || '1');
+      setStreak(savedStreak);
+    } else if (diffDays === 1) {
+      // Вчера был - стрик продолжается
+      const savedStreak = parseInt(localStorage.getItem('currentStreak') || '1');
+      const newStreak = savedStreak + 1;
+      setStreak(newStreak);
+      localStorage.setItem('lastActivityDate', today);
+      localStorage.setItem('currentStreak', newStreak.toString());
+    } else {
+      // Пропущено больше 1 дня - проверяем защиту стрика
+      const hasProtection = localStorage.getItem('streakProtection') === 'true';
+      
+      if (hasProtection) {
+        // Защита активна - стрик сохраняется
+        const savedStreak = parseInt(localStorage.getItem('currentStreak') || '1');
+        setStreak(savedStreak);
+        localStorage.setItem('lastActivityDate', today);
+        
+        // Убираем защиту после использования
+        localStorage.removeItem('streakProtection');
+        localStorage.removeItem('streakProtectionDate');
+        
+        console.log('🛡️ Защита стрика использована! Стрик сохранен.');
+        
+        // Показать уведомление
+        haptic?.('medium');
+      } else {
+        // Нет защиты - стрик сбрасывается
+        setStreak(1);
+        localStorage.setItem('lastActivityDate', today);
+        localStorage.setItem('currentStreak', '1');
+        
+        console.log('💔 Стрик сброшен из-за пропуска дня');
+      }
+    }
+  };
   
   // Проверяем достижения при изменении монет
   useEffect(() => {
@@ -112,7 +175,34 @@ const Index = () => {
   ];
 
   const handleLessonStart = (lessonId: string) => {
-    setCurrentLesson(lessonId);
+    haptic?.('light');
+    const lesson = COMPLETE_LESSONS.find(l => l.id === lessonId);
+    if (lesson) {
+      setSelectedLesson(lesson);
+      setShowLessonPreview(true);
+    }
+  };
+
+  const startLessonFromPreview = () => {
+    setShowLessonPreview(false);
+    if (selectedLesson) {
+      setCurrentLesson(selectedLesson.id);
+    }
+  };
+
+  // Найти следующий незавершенный урок
+  const getNextLesson = () => {
+    const completedLessons = JSON.parse(localStorage.getItem('completedLessons') || '[]');
+    return COMPLETE_LESSONS.find(lesson => !completedLessons.includes(lesson.id));
+  };
+
+  const handleNextLesson = () => {
+    setShowCompletion(false);
+    setCompletedLesson(null);
+    const nextLesson = getNextLesson();
+    if (nextLesson) {
+      handleLessonStart(nextLesson.id);
+    }
   };
 
   const handleUseItem = (itemId: string, effect: { type: string; value: number }) => {
@@ -169,16 +259,20 @@ const Index = () => {
     setXp(prev => prev + finalXP);
     
     // Начисляем монеты (10 монет за урок + бонус за XP)
-    const coinsEarned = 10 + Math.floor(xpEarned / 10);
+    const coinsEarned = 10 + Math.floor(finalXP / 10);
     setCoins(prev => {
       const newCoins = prev + coinsEarned;
       localStorage.setItem('userCoins', newCoins.toString());
       return newCoins;
     });
     
+    // Обновляем дату последней активности для стрика
+    const today = new Date().toDateString();
+    localStorage.setItem('lastActivityDate', today);
+    
     // Обновляем квесты
     questProgress.updateLessonQuest();
-    questProgress.updateXPQuest(xpEarned);
+    questProgress.updateXPQuest(finalXP);
     
     // Проверяем и разблокируем достижения
     const completedLessons = JSON.parse(localStorage.getItem('completedLessons') || '[]');
@@ -763,6 +857,8 @@ const Index = () => {
             message={completedLesson.message}
             xpBoosted={completedLesson.xpBoosted}
             coinsEarned={completedLesson.coinsEarned}
+            nextLessonId={getNextLesson()?.id}
+            onNextLesson={handleNextLesson}
             onContinue={() => {
               setShowCompletion(false);
               setCompletedLesson(null);
@@ -839,6 +935,20 @@ const Index = () => {
           <Inventory
             onClose={() => setShowInventory(false)}
             onUseItem={handleUseItem}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Lesson Preview Modal */}
+      <AnimatePresence>
+        {showLessonPreview && selectedLesson && (
+          <LessonPreview
+            lesson={selectedLesson}
+            onStart={startLessonFromPreview}
+            onClose={() => {
+              setShowLessonPreview(false);
+              setSelectedLesson(null);
+            }}
           />
         )}
       </AnimatePresence>
