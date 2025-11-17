@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import ParentDashboard from "./pages/ParentDashboard";
+import ParentApp from "./pages/ParentApp";
 import CuratorDashboard from "./pages/CuratorDashboard";
 import LoginPage from "./pages/LoginPage";
 import RoleSelection from "./pages/RoleSelection";
@@ -88,15 +89,15 @@ const App = () => {
               } 
             />
             
-            {/* TODO: Создать ParentLearning компонент */}
-            {/* <Route 
-              path="/parent-learning" 
+            {/* Parent Learning App - объединяет мониторинг + обучение */}
+            <Route 
+              path="/parent-app" 
               element={
-                <ProtectedRoute allowedRoles={['parent_learning']}>
-                  <ParentLearning />
+                <ProtectedRoute allowedRoles={['parent', 'parent_learning']}>
+                  <ParentApp />
                 </ProtectedRoute>
               } 
-            /> */}
+            />
             
             <Route 
               path="/curator" 
