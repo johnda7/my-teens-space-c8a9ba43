@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTeens.Space - Тестовая авторизация</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 600;
+        }
+        button:hover {
+            transform: scale(1.02);
+        }
+        .student { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .parent { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .parent-learning { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        .curator { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
+        .clear { background: #e74c3c; color: white; }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Тестовая авторизация</h1>
+        <p style="text-align: center; color: #666;">Выберите роль для тестирования:</p>
+        
+        <button class="student" onclick="setRole('student', 'Алексей', 'student-test-123')">
+            👨‍🎓 Войти как Ученик
+        </button>
+        
+        <button class="parent" onclick="setRole('parent', 'Мария (родитель)', 'parent-test-456')">
+            👁️ Войти как Родитель (Мониторинг)
+        </button>
+        
+        <button class="parent-learning" onclick="setRole('parent_learning', 'Ирина (обучение)', 'parent-learn-789')">
+            📚 Войти как Родитель (Обучение)
+        </button>
+        
+        <button class="curator" onclick="setRole('curator', 'Анна Ивановна', 'curator-test-101')">
+            👩‍🏫 Войти как Куратор
+        </button>
+        
+        <button class="clear" onclick="clearAuth()">
+            🗑️ Очистить данные авторизации
+        </button>
+        
+        <div id="status" class="status">
+            Статус: Не авторизован
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="/my-teens-space-c8a9ba43/" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                → Перейти в приложение
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function setRole(role, name, userId) {
+            localStorage.setItem('userId', userId);
+            localStorage.setItem('userRole', role);
+            localStorage.setItem('userName', name);
+            localStorage.setItem('telegramId', 'test_' + Date.now());
+            
+            updateStatus();
+            
+            setTimeout(() => {
+                window.location.href = '/my-teens-space-c8a9ba43/';
+            }, 1000);
+        }
+        
+        function clearAuth() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('telegramId');
+            localStorage.removeItem('initialBalanceScores');
+            localStorage.removeItem('finalBalanceScores');
+            
+            updateStatus();
+        }
+        
+        function updateStatus() {
+            const userId = localStorage.getItem('userId');
+            const userRole = localStorage.getItem('userRole');
+            const userName = localStorage.getItem('userName');
+            
+            const statusDiv = document.getElementById('status');
+            
+            if (userId) {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = `
+                    <strong>✅ Авторизован</strong><br>
+                    Имя: ${userName}<br>
+                    Роль: ${userRole}<br>
+                    ID: ${userId}
+                `;
+            } else {
+                statusDiv.className = 'status';
+                statusDiv.innerHTML = 'Статус: Не авторизован';
+            }
+        }
+        
+        // Обновляем статус при загрузке
+        updateStatus();
+    </script>
+</body>
+</html>
