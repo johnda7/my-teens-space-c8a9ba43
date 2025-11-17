@@ -9,9 +9,11 @@ interface LessonCompleteProps {
   xpEarned: number;
   message: string;
   onContinue: () => void;
+  xpBoosted?: boolean; // Был ли применен бустер
+  coinsEarned?: number; // Сколько монет получено
 }
 
-const LessonComplete = ({ xpEarned, message, onContinue }: LessonCompleteProps) => {
+const LessonComplete = ({ xpEarned, message, onContinue, xpBoosted, coinsEarned }: LessonCompleteProps) => {
   useEffect(() => {
     // Confetti animation
     const duration = 3000;
@@ -98,10 +100,32 @@ const LessonComplete = ({ xpEarned, message, onContinue }: LessonCompleteProps) 
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.9, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-warning to-warning/80 rounded-full shadow-lg"
+            className="space-y-2"
           >
-            <Star className="w-6 h-6 text-white fill-white" />
-            <span className="text-2xl font-bold text-white">+{xpEarned} XP</span>
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-warning to-warning/80 rounded-full shadow-lg">
+              <Star className="w-6 h-6 text-white fill-white" />
+              <span className="text-2xl font-bold text-white">+{xpEarned} XP</span>
+            </div>
+            
+            {/* Бонус бустера */}
+            {xpBoosted && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.1 }}
+                className="text-sm text-purple-600 font-semibold"
+              >
+                🚀 XP удвоен бустером!
+              </motion.div>
+            )}
+            
+            {/* Монеты */}
+            {coinsEarned && (
+              <div className="flex items-center justify-center gap-2 text-yellow-600 font-semibold">
+                <span className="text-xl">🪙</span>
+                <span>+{coinsEarned} монет</span>
+              </div>
+            )}
           </motion.div>
         </motion.div>
 

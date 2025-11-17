@@ -18,6 +18,8 @@ import { DailyQuests, useQuestProgress } from '@/components/DailyQuests';
 import { EmotionMatchGame } from '@/components/EmotionMatchGame';
 import { Shop, useInventory } from '@/components/Shop';
 import { Achievements, useAchievements } from '@/components/Achievements';
+import { Inventory } from '@/components/Inventory';
+import { ActiveEffects } from '@/components/ActiveEffects';
 import { useTelegram } from '@/hooks/useTelegram';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,6 +39,7 @@ const Index = () => {
   const [completedLesson, setCompletedLesson] = useState<any>(null);
   const [showMiniGame, setShowMiniGame] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
 
   const [streak, setStreak] = useState(7);
   const [level, setLevel] = useState(3);
@@ -112,11 +115,58 @@ const Index = () => {
     setCurrentLesson(lessonId);
   };
 
+  const handleUseItem = (itemId: string, effect: { type: string; value: number }) => {
+    switch (effect.type) {
+      case 'energy':
+        // Восстановление энергии
+        const currentEnergy = parseInt(localStorage.getItem('userEnergy') || '100');
+        const newEnergy = Math.min(100, currentEnergy + effect.value);
+        localStorage.setItem('userEnergy', newEnergy.toString());
+        localStorage.setItem('lastEnergyUpdate', Date.now().toString());
+        
+        haptic?.('medium');
+        console.log(`✨ Энергия восстановлена на +${effect.value}`);
+        break;
+        
+      case 'xp_boost':
+        // Активировать XP бустер на следующий урок
+        localStorage.setItem('activeXPBoost', 'true');
+        haptic?.('medium');
+        console.log('🚀 XP Booster активирован!');
+        break;
+        
+      case 'streak_protection':
+        // Защита стрика
+        localStorage.setItem('streakProtection', 'true');
+        localStorage.setItem('streakProtectionDate', new Date().toISOString());
+        haptic?.('medium');
+        console.log('🛡️ Защита стрика активирована!');
+        break;
+        
+      case 'hint':
+        // Подсказки добавляются автоматически в инвентарь
+        haptic?.('light');
+        console.log('💡 Подсказка готова к использованию в уроке');
+        break;
+    }
+    
+    // Закрываем инвентарь
+    setShowInventory(false);
+  };
+
   const handleLessonComplete = (xpEarned: number) => {
     const lesson = COMPLETE_LESSONS.find(l => l.id === currentLesson);
     
+    // Проверяем активный XP бустер
+    let finalXP = xpEarned;
+    if (localStorage.getItem('activeXPBoost') === 'true') {
+      finalXP = xpEarned * 2;
+      localStorage.removeItem('activeXPBoost');
+      console.log('🚀 XP удвоен бустером!');
+    }
+    
     // Обновляем XP
-    setXp(prev => prev + xpEarned);
+    setXp(prev => prev + finalXP);
     
     // Начисляем монеты (10 монет за урок + бонус за XP)
     const coinsEarned = 10 + Math.floor(xpEarned / 10);
@@ -154,9 +204,10 @@ const Index = () => {
     }
     
     setCompletedLesson({ 
-      xpEarned, 
+      xpEarned: finalXP, 
       coinsEarned,
-      message: lesson?.completionMessage || 'Отлично!' 
+      message: lesson?.completionMessage || 'Отлично!',
+      xpBoosted: finalXP !== xpEarned // Флаг что был бустер
     });
     setCurrentLesson(null);
     setShowCompletion(true);
@@ -166,15 +217,34 @@ const Index = () => {
     return (
       <div className="space-y-6">
         {/* Энергия и валюта - игровой header */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-2">
           <EnergySystem />
-          <CurrencyDisplay 
-            coins={coins} 
-            gems={gems}
-            onCoinsClick={() => setShowShop(true)}
-            onGemsClick={() => setShowShop(true)}
-          />
+          <div className="flex items-center gap-2">
+            {/* Кнопка рюкзака */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowInventory(true)}
+              className="relative bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-2xl shadow-lg"
+            >
+              <span className="text-2xl">🎒</span>
+              {inventory.getInventory() && Object.keys(inventory.getInventory()).length > 0 && (
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {Object.values(inventory.getInventory()).reduce((a, b) => a + b, 0)}
+                </div>
+              )}
+            </motion.button>
+            <CurrencyDisplay 
+              coins={coins} 
+              gems={gems}
+              onCoinsClick={() => setShowShop(true)}
+              onGemsClick={() => setShowShop(true)}
+            />
+          </div>
         </div>
+
+        {/* Активные эффекты */}
+        <ActiveEffects />
 
         {/* Ежедневные задания */}
         <motion.div
@@ -691,6 +761,8 @@ const Index = () => {
           <LessonComplete
             xpEarned={completedLesson.xpEarned}
             message={completedLesson.message}
+            xpBoosted={completedLesson.xpBoosted}
+            coinsEarned={completedLesson.coinsEarned}
             onContinue={() => {
               setShowCompletion(false);
               setCompletedLesson(null);
@@ -757,6 +829,16 @@ const Index = () => {
 
               console.log(`✅ Куплено: ${item.name}`);
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Inventory Modal */}
+      <AnimatePresence>
+        {showInventory && (
+          <Inventory
+            onClose={() => setShowInventory(false)}
+            onUseItem={handleUseItem}
           />
         )}
       </AnimatePresence>
