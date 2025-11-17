@@ -52,7 +52,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename="/my-teens-space-c8a9ba43">
+        <BrowserRouter>
           <Routes>
             {/* Публичные роуты */}
             <Route path="/login" element={<LoginPage />} />
