@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import LearningPath from '@/components/LearningPath';
 import ModuleRoom from '@/components/ModuleRoom';
 import EnhancedLessonInterface from '@/components/EnhancedLessonInterface';
@@ -28,6 +29,7 @@ import '@/styles/game.css';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { haptic, isInTelegram, user } = useTelegram();
   const questProgress = useQuestProgress();
   const inventory = useInventory();
@@ -132,6 +134,11 @@ const Index = () => {
         
         // Показать уведомление
         haptic?.('medium');
+        toast({
+          title: '🛡️ Защита стрика сработала!',
+          description: `Твой стрик ${savedStreak} дней сохранён! Защита израсходована.`,
+          duration: 5000,
+        });
       } else {
         // Нет защиты - стрик сбрасывается
         setStreak(1);
@@ -139,6 +146,12 @@ const Index = () => {
         localStorage.setItem('currentStreak', '1');
         
         console.log('💔 Стрик сброшен из-за пропуска дня');
+        toast({
+          title: '💔 Стрик сброшен',
+          description: 'Ты пропустил день. Начни новый стрик! Купи защиту стрика в магазине.',
+          variant: 'destructive',
+          duration: 5000,
+        });
       }
     }
   };
@@ -216,6 +229,11 @@ const Index = () => {
         
         haptic?.('medium');
         console.log(`✨ Энергия восстановлена на +${effect.value}`);
+        toast({
+          title: '⚡ Энергия восстановлена!',
+          description: `+${effect.value} энергии. Теперь: ${newEnergy}/100`,
+          duration: 3000,
+        });
         break;
         
       case 'xp_boost':
@@ -223,6 +241,11 @@ const Index = () => {
         localStorage.setItem('activeXPBoost', 'true');
         haptic?.('medium');
         console.log('🚀 XP Booster активирован!');
+        toast({
+          title: '🚀 XP Booster активирован!',
+          description: 'Следующий урок принесёт в 2 раза больше XP!',
+          duration: 3000,
+        });
         break;
         
       case 'streak_protection':
@@ -231,6 +254,11 @@ const Index = () => {
         localStorage.setItem('streakProtectionDate', new Date().toISOString());
         haptic?.('medium');
         console.log('🛡️ Защита стрика активирована!');
+        toast({
+          title: '🛡️ Защита стрика активирована!',
+          description: 'Если пропустишь день, твой стрик не сбросится. Защита сработает один раз.',
+          duration: 4000,
+        });
         break;
         
       case 'hint':
