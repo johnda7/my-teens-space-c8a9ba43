@@ -5,8 +5,10 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/my-teens-space-c8a9ba43/',
+  root: './frontend',
+  base: '/',
   build: {
+    outDir: '../dist',
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: false,
@@ -30,4 +32,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./frontend/src"),
     },
   },
+  root: './frontend',
 }));
