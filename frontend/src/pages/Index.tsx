@@ -615,38 +615,11 @@ const Index = () => {
       </motion.div>
 
       {/* Main Content */}
-      <div className="p-4">
+      <main className="relative z-10 p-4 pb-24 max-w-3xl mx-auto">
         <AnimatePresence mode="wait">
-          {/* Header with glassmorphism */}
-          <motion.div
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{
-              type: 'spring',
-              stiffness: 400,
-              damping: 17,
-            }}
-            className="relative bg-white/70 backdrop-blur-[40px] px-4 pt-4 pb-3 text-gray-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sticky top-0 z-40 border-b border-white/20"
-          >
-            <div className="relative flex items-center justify-between">
-              <div>
-                <p className="text-[11px] text-slate-500 mb-0.5">Сегодня</p>
-                <h1 className="text-lg font-semibold text-slate-900">
-                  {user?.first_name ? `${user.first_name}, привет!` : 'Привет!'}
-                </h1>
-                <p className="text-[12px] text-slate-600">
-                  Можно зайти в урок, сделать чек-ин или заглянуть в группу.
-                </p>
-              </div>
-              <div className="w-16 h-16 relative hidden sm:block">
-                <AnimatedKatyaV2 />
-              </div>
-            </div>
-          </motion.div>
-
-          <main className="relative z-10 px-4 pt-4 pb-24 max-w-3xl mx-auto">
-            {renderActiveTab()}
-          </main>
+          {renderActiveTab()}
+        </AnimatePresence>
+      </main>
 
           {/* NOTE: legacy tab-specific content below is obsolete and will be removed in favor of renderActiveTab; keep only if needed. */}
 
