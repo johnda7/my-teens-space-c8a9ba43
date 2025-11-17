@@ -12,6 +12,12 @@ import LessonComplete from '@/components/LessonComplete';
 import BalanceAssessment from '@/components/BalanceAssessment';
 import WheelOfBalance from '@/components/WheelOfBalance';
 import AnimatedKatyaV2 from '@/components/AnimatedKatyaV2';
+import { EnergySystem } from '@/components/EnergySystem';
+import { CurrencyDisplay } from '@/components/CurrencyDisplay';
+import { DailyQuests, useQuestProgress } from '@/components/DailyQuests';
+import { EmotionMatchGame } from '@/components/EmotionMatchGame';
+import { Shop, useInventory } from '@/components/Shop';
+import { Achievements, useAchievements } from '@/components/Achievements';
 import { useTelegram } from '@/hooks/useTelegram';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,17 +26,33 @@ import '@/styles/game.css';
 const Index = () => {
   const navigate = useNavigate();
   const { haptic, isInTelegram, user } = useTelegram();
+  const questProgress = useQuestProgress();
+  const inventory = useInventory();
+  const achievementsHook = useAchievements();
+  
   const [activeTab, setActiveTab] = useState<'learning' | 'checkin' | 'chat' | 'group' | 'profile'>('learning');
   const [currentModule, setCurrentModule] = useState<string | null>(null);
   const [currentLesson, setCurrentLesson] = useState<string | null>(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [completedLesson, setCompletedLesson] = useState<any>(null);
+  const [showMiniGame, setShowMiniGame] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   const [streak, setStreak] = useState(7);
   const [level, setLevel] = useState(3);
   const [xp, setXp] = useState(450);
   const [nextLevelXP] = useState(600);
   const [currentWeek, setCurrentWeek] = useState(1);
+  
+  // Игровые ресурсы
+  const [coins, setCoins] = useState(() => {
+    const saved = localStorage.getItem('userCoins');
+    return saved ? parseInt(saved) : 0;
+  });
+  const [gems, setGems] = useState(() => {
+    const saved = localStorage.getItem('userGems');
+    return saved ? parseInt(saved) : 0;
+  });
   
   // Колесо баланса
   const [showBalanceWheel, setShowBalanceWheel] = useState(false);
@@ -44,8 +66,21 @@ const Index = () => {
     if (savedInitialScores) {
       setInitialScores(JSON.parse(savedInitialScores));
     }
-    // Не форсим колесо баланса на первом экране — запускаем его по кнопке
+    
+    // Проверяем достижения при загрузке
+    // Достижение за стрик
+    achievementsHook.updateProgress('streak_7', streak);
+    achievementsHook.updateProgress('streak_30', streak);
+    
+    // Достижение за монеты
+    achievementsHook.updateProgress('coins_1000', coins);
+    
   }, []);
+  
+  // Проверяем достижения при изменении монет
+  useEffect(() => {
+    achievementsHook.updateProgress('coins_1000', coins);
+  }, [coins]);
 
   const getModuleWeekLessons = () => {
     if (!currentModule) return [];
@@ -79,8 +114,50 @@ const Index = () => {
 
   const handleLessonComplete = (xpEarned: number) => {
     const lesson = COMPLETE_LESSONS.find(l => l.id === currentLesson);
+    
+    // Обновляем XP
     setXp(prev => prev + xpEarned);
-    setCompletedLesson({ xpEarned, message: lesson?.completionMessage || 'Отлично!' });
+    
+    // Начисляем монеты (10 монет за урок + бонус за XP)
+    const coinsEarned = 10 + Math.floor(xpEarned / 10);
+    setCoins(prev => {
+      const newCoins = prev + coinsEarned;
+      localStorage.setItem('userCoins', newCoins.toString());
+      return newCoins;
+    });
+    
+    // Обновляем квесты
+    questProgress.updateLessonQuest();
+    questProgress.updateXPQuest(xpEarned);
+    
+    // Проверяем и разблокируем достижения
+    const completedLessons = JSON.parse(localStorage.getItem('completedLessons') || '[]');
+    completedLessons.push(currentLesson);
+    localStorage.setItem('completedLessons', JSON.stringify(completedLessons));
+    
+    // Достижение "Новичок" - первый урок
+    if (completedLessons.length === 1) {
+      const achievement = achievementsHook.unlockAchievement('first_lesson');
+      if (achievement) {
+        console.log('🏆 Разблокировано достижение:', achievement.name);
+      }
+    }
+    
+    // Обновляем прогресс достижений по количеству уроков
+    achievementsHook.updateProgress('lessons_10', completedLessons.length);
+    achievementsHook.updateProgress('lessons_25', completedLessons.length);
+    achievementsHook.updateProgress('lessons_all', completedLessons.length);
+    
+    // Достижение "Перфекционист" - 100% за урок
+    if (xpEarned >= (lesson?.xp || 0)) {
+      achievementsHook.unlockAchievement('perfect_score');
+    }
+    
+    setCompletedLesson({ 
+      xpEarned, 
+      coinsEarned,
+      message: lesson?.completionMessage || 'Отлично!' 
+    });
     setCurrentLesson(null);
     setShowCompletion(true);
   };
@@ -88,6 +165,30 @@ const Index = () => {
   const renderLearningTab = () => {
     return (
       <div className="space-y-6">
+        {/* Энергия и валюта - игровой header */}
+        <div className="flex justify-between items-center">
+          <EnergySystem />
+          <CurrencyDisplay 
+            coins={coins} 
+            gems={gems}
+            onCoinsClick={() => setShowShop(true)}
+            onGemsClick={() => setShowShop(true)}
+          />
+        </div>
+
+        {/* Ежедневные задания */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-orange-400 to-pink-500 p-4 rounded-3xl shadow-lg"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-5 h-5 text-white" />
+            <h3 className="text-white font-bold">Дневные миссии</h3>
+          </div>
+          <DailyQuests />
+        </motion.div>
+
         {/* Миссия дня */}
         {dailyMissionLesson && (
           <motion.div
@@ -100,8 +201,8 @@ const Index = () => {
                 <Target className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Миссия дня</h3>
-                <p className="text-xs text-slate-600">+{dailyMissionLesson.xp} XP</p>
+                <h3 className="text-sm font-bold text-slate-900">Урок дня</h3>
+                <p className="text-xs text-slate-600">+{dailyMissionLesson.xp} XP • +{10 + Math.floor(dailyMissionLesson.xp / 10)} 🪙</p>
               </div>
             </div>
             <p className="text-sm text-slate-700 mb-3">{dailyMissionLesson.title}</p>
@@ -109,7 +210,7 @@ const Index = () => {
               onClick={() => handleLessonStart(dailyMissionLesson.id)}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              Начать урок
+              Начать урок ⚡
             </Button>
           </motion.div>
         )}
@@ -150,6 +251,25 @@ const Index = () => {
           >
             {!initialScores ? '🎯 Стартовый тест баланса' : '📊 Измерить баланс'}
           </Button>
+          
+          {/* Мини-игра дня */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowMiniGame(true)}
+            className="w-full bg-gradient-to-r from-purple-500 to-blue-500 p-5 rounded-2xl text-left shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-white font-bold mb-1">🎮 Мини-игра дня</h3>
+                <p className="text-white/80 text-sm">Найди пары эмоций</p>
+              </div>
+              <div className="text-right">
+                <span className="text-3xl">🏆</span>
+                <p className="text-white text-xs mt-1">+50 XP • +100 🪙</p>
+              </div>
+            </div>
+          </motion.button>
         </div>
 
         {/* Модули */}
@@ -233,11 +353,60 @@ const Index = () => {
 
   const renderProfileTab = () => {
     return (
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-slate-900">Профиль и награды</h2>
-        <p className="text-xs text-slate-600">
-          Здесь будут твои бейджи, прогресс по модулям и настройки.
-        </p>
+      <div className="space-y-6">
+        {/* Статистика пользователя */}
+        <div className="bg-white/90 backdrop-blur-sm p-5 rounded-3xl shadow-lg">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl">
+              😊
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">
+                {user?.first_name || 'Ученик'}
+              </h3>
+              <p className="text-sm text-slate-600">Уровень {level}</p>
+            </div>
+          </div>
+
+          {/* Прогресс до следующего уровня */}
+          <div className="mb-4">
+            <div className="flex justify-between text-sm text-slate-600 mb-2">
+              <span>Прогресс</span>
+              <span>{xp} / {nextLevelXP} XP</span>
+            </div>
+            <Progress value={(xp / nextLevelXP) * 100} className="h-2" />
+          </div>
+
+          {/* Быстрая статистика */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl">
+              <div className="text-2xl mb-1">🔥</div>
+              <div className="text-xs text-slate-600">Стрик</div>
+              <div className="text-lg font-bold text-slate-900">{streak}</div>
+            </div>
+            <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+              <div className="text-2xl mb-1">🪙</div>
+              <div className="text-xs text-slate-600">Монеты</div>
+              <div className="text-lg font-bold text-slate-900">{coins}</div>
+            </div>
+            <div className="text-center p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
+              <div className="text-2xl mb-1">💎</div>
+              <div className="text-xs text-slate-600">Кристаллы</div>
+              <div className="text-lg font-bold text-slate-900">{gems}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Достижения */}
+        <Achievements />
+
+        {/* Кнопка магазина */}
+        <Button
+          onClick={() => setShowShop(true)}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+        >
+          🛒 Открыть магазин
+        </Button>
       </div>
     );
   };
@@ -689,7 +858,7 @@ const Index = () => {
         {showBalanceWheel && (
           <BalanceAssessment
             type={balanceType}
-            onComplete={(scores) => {
+            onComplete={(scores, answers) => {
               if (balanceType === 'initial') {
                 setInitialScores(scores);
                 localStorage.setItem('initialBalanceScores', JSON.stringify(scores));
@@ -699,26 +868,54 @@ const Index = () => {
               }
               setShowBalanceWheel(false);
             }}
-            onClose={() => setShowBalanceWheel(false)}
           />
         )}
 
         {currentModule && !currentLesson && (
           <ModuleRoom
-            moduleId={currentModule}
-            lessons={weekLessons}
-            onLessonSelect={handleLessonStart}
-            onClose={() => setCurrentModule(null)}
-            currentWeek={currentWeek}
-            onWeekChange={setCurrentWeek}
-          />
+            title={modules.find(m => m.id === currentModule)?.name || ''}
+            description={`Изучай модуль ${modules.find(m => m.id === currentModule)?.name}`}
+            icon={<div className="w-10 h-10" />}
+            theme={currentModule as 'boundaries' | 'confidence' | 'emotions' | 'relationships'}
+            progress={modules.find(m => m.id === currentModule)?.progress || 0}
+          >
+            <div className="space-y-4">
+              <button 
+                onClick={() => setCurrentModule(null)}
+                className="mb-4 px-4 py-2 bg-white/80 rounded-lg"
+              >
+                ← Назад
+              </button>
+              
+              <div className="space-y-2">
+                {weekLessons.map((lesson) => (
+                  <button
+                    key={lesson.id}
+                    onClick={() => handleLessonStart(lesson.id)}
+                    disabled={lesson.status === 'locked'}
+                    className="w-full p-4 bg-white/80 backdrop-blur rounded-2xl text-left disabled:opacity-50"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{lesson.title}</span>
+                      <span className="text-sm text-purple-600">+{lesson.xp} XP</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </ModuleRoom>
         )}
 
         {currentLesson && (
           <EnhancedLessonInterface
-            lesson={COMPLETE_LESSONS.find(l => l.id === currentLesson)!}
+            questions={COMPLETE_LESSONS.find(l => l.id === currentLesson)?.questions || []}
+            lessonTitle={COMPLETE_LESSONS.find(l => l.id === currentLesson)?.title || ''}
+            xpReward={COMPLETE_LESSONS.find(l => l.id === currentLesson)?.xp || 0}
+            lessonId={currentLesson}
+            intro={COMPLETE_LESSONS.find(l => l.id === currentLesson)?.intro}
+            completionMeta={COMPLETE_LESSONS.find(l => l.id === currentLesson)?.completion}
             onComplete={handleLessonComplete}
-            onClose={() => setCurrentLesson(null)}
+            onExit={() => setCurrentLesson(null)}
           />
         )}
 
@@ -729,6 +926,68 @@ const Index = () => {
             onContinue={() => {
               setShowCompletion(false);
               setCompletedLesson(null);
+            }}
+          />
+        )}
+
+        {/* Мини-игра */}
+        {showMiniGame && (
+          <EmotionMatchGame
+            onClose={() => setShowMiniGame(false)}
+            onComplete={(score) => {
+              // Начисляем награды за мини-игру
+              const xpEarned = Math.floor(score / 10);
+              const coinsEarned = Math.floor(score / 5);
+              
+              setXp(prev => prev + xpEarned);
+              setCoins(prev => {
+                const newCoins = prev + coinsEarned;
+                localStorage.setItem('userCoins', newCoins.toString());
+                return newCoins;
+              });
+              
+              // Обновляем квест мини-игры
+              questProgress.updateMiniGameQuest();
+              
+              setShowMiniGame(false);
+            }}
+          />
+        )}
+
+        {/* Магазин */}
+        {showShop && (
+          <Shop
+            onClose={() => setShowShop(false)}
+            coins={coins}
+            gems={gems}
+            onPurchase={(item) => {
+              // Списываем валюту
+              if (item.currency === 'coins') {
+                setCoins(prev => {
+                  const newCoins = prev - item.price;
+                  localStorage.setItem('userCoins', newCoins.toString());
+                  return newCoins;
+                });
+              } else {
+                setGems(prev => {
+                  const newGems = prev - item.price;
+                  localStorage.setItem('userGems', newGems.toString());
+                  return newGems;
+                });
+              }
+
+              // Добавляем в инвентарь
+              inventory.addItem(item.id, 1);
+
+              // Применяем эффект немедленно для некоторых предметов
+              if (item.effect.type === 'energy') {
+                const currentEnergy = parseInt(localStorage.getItem('userEnergy') || '100');
+                const newEnergy = Math.min(currentEnergy + item.effect.value, 100);
+                localStorage.setItem('userEnergy', newEnergy.toString());
+                localStorage.setItem('lastEnergyUpdate', Date.now().toString());
+              }
+
+              console.log(`✅ Куплено: ${item.name}`);
             }}
           />
         )}
