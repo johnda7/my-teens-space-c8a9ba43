@@ -47,12 +47,17 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
 };
 
 const App = () => {
+  // Используем basename только на GitHub Pages
+  const basename = window.location.hostname.includes('github.io') 
+    ? '/my-teens-space-c8a9ba43' 
+    : undefined;
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename="/my-teens-space-c8a9ba43">
+        <BrowserRouter basename={basename}>
           <Routes>
             {/* Публичные роуты */}
             <Route path="/login" element={<LoginPage />} />
