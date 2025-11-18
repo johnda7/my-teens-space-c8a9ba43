@@ -25,6 +25,7 @@ import LessonPreview from '@/components/LessonPreview';
 import { useTelegram } from '@/hooks/useTelegram';
 import { COMPLETE_LESSONS, getModuleLessons, getWeekLessons } from '@/data/allLessonsData';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fullSync, syncProgressToServer, completeLessonWithSync, setupAutoSync } from '@/lib/syncUtils';
 import '@/styles/game.css';
 
 const Index = () => {
@@ -79,14 +80,41 @@ const Index = () => {
     checkAndUpdateStreak();
     
     // Проверяем достижения при загрузке
-    // Достижение за стрик
     achievementsHook.updateProgress('streak_7', streak);
     achievementsHook.updateProgress('streak_30', streak);
-    
-    // Достижение за монеты
     achievementsHook.updateProgress('coins_1000', coins);
     
-  }, []);
+    // Синхронизация с сервером при наличии Telegram ID
+    const initSync = async () => {
+      const telegramId = user?.id?.toString();
+      if (telegramId) {
+        console.log('🔄 Инициализация синхронизации для Telegram ID:', telegramId);
+        
+        // Полная синхронизация при загрузке
+        const syncSuccess = await fullSync(telegramId);
+        
+        if (syncSuccess) {
+          toast({
+            title: '✅ Прогресс синхронизирован',
+            description: 'Твои данные загружены с облака',
+            duration: 3000,
+          });
+          
+          // Обновляем state из обновленного localStorage
+          const updatedXP = parseInt(localStorage.getItem('userXP') || '0');
+          const updatedStreak = parseInt(localStorage.getItem('currentStreak') || '0');
+          setXp(updatedXP);
+          setStreak(updatedStreak);
+        }
+        
+        // Настраиваем автоматическую синхронизацию каждые 5 минут
+        const cleanup = setupAutoSync(telegramId, 5);
+        return cleanup;
+      }
+    };
+    
+    initSync();
+  }, [user]);
   
   // Функция проверки и обновления стрика
   const checkAndUpdateStreak = () => {

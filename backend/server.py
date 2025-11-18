@@ -784,6 +784,227 @@ async def root():
         }
     }
 
+
+# ========== NEW: Telegram ID based endpoints ==========
+
+@api_router.post("/sync/progress")
+async def sync_progress(telegram_id: str, progress_data: dict):
+    """
+    Синхронизация прогресса пользователя из localStorage
+    
+    Args:
+        telegram_id: Telegram ID пользователя
+        progress_data: {
+            "completedLessons": [],
+            "xp": 0,
+            "level": 1,
+            "coins": 0,
+            "gems": 0,
+            "streak": 0,
+            "energy": 100,
+            "inventory": {},
+            "balanceScores": {}
+        }
+    """
+    user = await db.users.find_one({"telegram_id": telegram_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    user_id = user["id"]
+    
+    # Обновляем пользователя
+    await db.users.update_one(
+        {"telegram_id": telegram_id},
+        {
+            "$set": {
+                "xp": progress_data.get("xp", 0),
+                "level": progress_data.get("level", 1),
+                "coins": progress_data.get("coins", 0),
+                "gems": progress_data.get("gems", 0),
+                "streak": progress_data.get("streak", 0),
+                "energy": progress_data.get("energy", 100),
+                "inventory": progress_data.get("inventory", {}),
+                "last_activity": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Синхронизируем пройденные уроки
+    completed_lessons = progress_data.get("completedLessons", [])
+    for lesson_id in completed_lessons:
+        existing = await db.lesson_progress.find_one({
+            "user_id": user_id,
+            "lesson_id": lesson_id
+        })
+        if not existing:
+            await db.lesson_progress.insert_one({
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "lesson_id": lesson_id,
+                "status": "completed",
+                "completed_at": datetime.utcnow(),
+                "score": 100,  # По умолчанию
+                "xp_earned": 0,
+                "answers": {},
+                "time_spent": 0
+            })
+    
+    # Синхронизируем balance assessments если есть
+    if progress_data.get("balanceScores"):
+        existing_assessment = await db.balance_assessments.find_one({
+            "user_id": user_id,
+            "type": "initial"
+        })
+        if not existing_assessment:
+            await db.balance_assessments.insert_one({
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "type": "initial",
+                "scores": progress_data["balanceScores"],
+                "timestamp": datetime.utcnow()
+            })
+    
+    return {
+        "message": "Прогресс синхронизирован",
+        "user_id": user_id
+    }
+
+
+@api_router.get("/sync/progress/{telegram_id}")
+async def get_synced_progress(telegram_id: str):
+    """
+    Получить синхронизированный прогресс пользователя
+    
+    Returns: Полный прогресс для загрузки в localStorage
+    """
+    user = await db.users.find_one({"telegram_id": telegram_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    user_id = user["id"]
+    
+    # Получаем все пройденные уроки
+    completed_lessons_cursor = db.lesson_progress.find({
+        "user_id": user_id,
+        "status": "completed"
+    })
+    completed_lessons_list = await completed_lessons_cursor.to_list(1000)
+    completed_lesson_ids = [lesson["lesson_id"] for lesson in completed_lessons_list]
+    
+    # Получаем balance assessments
+    balance_assessment = await db.balance_assessments.find_one({
+        "user_id": user_id,
+        "type": "initial"
+    })
+    
+    balance_scores = {}
+    if balance_assessment:
+        balance_scores = balance_assessment.get("scores", {})
+    
+    return {
+        "telegram_id": telegram_id,
+        "user_id": user_id,
+        "name": user.get("name"),
+        "role": user.get("role"),
+        "completedLessons": completed_lesson_ids,
+        "xp": user.get("xp", 0),
+        "level": user.get("level", 1),
+        "coins": user.get("coins", 0),
+        "gems": user.get("gems", 0),
+        "streak": user.get("streak", 0),
+        "energy": user.get("energy", 100),
+        "inventory": user.get("inventory", {}),
+        "balanceScores": balance_scores,
+        "last_activity": user.get("last_activity")
+    }
+
+
+@api_router.post("/telegram/complete-lesson")
+async def complete_lesson_telegram(
+    telegram_id: str,
+    lesson_id: str,
+    score: int,
+    answers: dict,
+    time_spent: int,
+    xp_earned: int
+):
+    """
+    Завершить урок по Telegram ID (для синхронизации)
+    """
+    user = await db.users.find_one({"telegram_id": telegram_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    user_id = user["id"]
+    
+    # Создаем/обновляем прогресс урока
+    await db.lesson_progress.update_one(
+        {"user_id": user_id, "lesson_id": lesson_id},
+        {
+            "$set": {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "lesson_id": lesson_id,
+                "status": "completed",
+                "completed_at": datetime.utcnow(),
+                "score": score,
+                "xp_earned": xp_earned,
+                "answers": answers,
+                "time_spent": time_spent
+            }
+        },
+        upsert=True
+    )
+    
+    # Обновляем XP и streak пользователя
+    new_xp = user.get("xp", 0) + xp_earned
+    new_level = (new_xp // 500) + 1
+    
+    # Логика streak
+    last_activity = user.get("last_activity")
+    streak_days = user.get("streak", 0)
+    
+    if last_activity:
+        days_diff = (datetime.utcnow() - last_activity).days
+        if days_diff == 0:
+            # Сегодня уже был - не меняем
+            pass
+        elif days_diff == 1:
+            streak_days += 1
+        else:
+            # Проверяем streak protection
+            if user.get("streakProtection", False):
+                # Защита сработала - не сбрасываем
+                await db.users.update_one(
+                    {"telegram_id": telegram_id},
+                    {"$set": {"streakProtection": False}}
+                )
+            else:
+                streak_days = 1
+    else:
+        streak_days = 1
+    
+    await db.users.update_one(
+        {"telegram_id": telegram_id},
+        {
+            "$set": {
+                "xp": new_xp,
+                "level": new_level,
+                "streak": streak_days,
+                "last_activity": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {
+        "message": "Урок завершен",
+        "xp_earned": xp_earned,
+        "new_xp": new_xp,
+        "new_level": new_level,
+        "streak": streak_days
+    }
+
+
 # Include the router in the main app
 app.include_router(api_router)
 
