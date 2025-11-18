@@ -48,10 +48,10 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
 };
 
 const App = () => {
-  // Используем basename только на GitHub Pages
+  // Basename только для GitHub Pages, пустой для Lovable preview
   const basename = window.location.hostname.includes('github.io') 
     ? '/my-teens-space-c8a9ba43' 
-    : '/my-teens-space-c8a9ba43'; // Всегда используем basename для согласованности
+    : ''; // Пустой для preview/localhost
   
   return (
     <QueryClientProvider client={queryClient}>
