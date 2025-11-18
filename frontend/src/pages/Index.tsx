@@ -621,51 +621,58 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 pb-20 relative overflow-hidden">
-      {/* Animated background orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20 relative overflow-hidden">
+      {/* Animated Background Orbs - Using Design System Colors */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"
+          className="absolute top-20 -left-20 w-72 h-72 rounded-full blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.2))'
+          }}
           animate={{
             scale: [1, 1.2, 1],
-            opacity: [0.1, 0.2, 0.1],
+            opacity: [0.3, 0.5, 0.3],
             x: [0, 50, 0],
-            y: [0, 30, 0]
+            y: [0, 30, 0],
           }}
           transition={{
-            duration: 20,
+            duration: 8,
             repeat: Infinity,
             ease: "easeInOut"
           }}
         />
         <motion.div
-          className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl"
+          className="absolute top-1/2 right-0 w-96 h-96 rounded-full blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--secondary) / 0.3), hsl(var(--primary) / 0.2))'
+          }}
           animate={{
             scale: [1.2, 1, 1.2],
-            opacity: [0.15, 0.1, 0.15],
+            opacity: [0.2, 0.4, 0.2],
             x: [0, -30, 0],
-            y: [0, 50, 0]
+            y: [0, 50, 0],
           }}
           transition={{
-            duration: 25,
+            duration: 10,
             repeat: Infinity,
-            ease: "easeInOut",
-            delay: 5
+            ease: "easeInOut"
           }}
         />
         <motion.div
-          className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-400/10 rounded-full blur-3xl"
+          className="absolute bottom-20 left-1/3 w-80 h-80 rounded-full blur-3xl"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--accent) / 0.25), hsl(var(--secondary) / 0.2))'
+          }}
           animate={{
             scale: [1, 1.3, 1],
-            opacity: [0.1, 0.15, 0.1],
+            opacity: [0.25, 0.4, 0.25],
             x: [0, -40, 0],
-            y: [0, -20, 0]
+            y: [0, -20, 0],
           }}
           transition={{
-            duration: 30,
+            duration: 12,
             repeat: Infinity,
-            ease: "easeInOut",
-            delay: 10
+            ease: "easeInOut"
           }}
         />
       </div>
@@ -703,7 +710,7 @@ const Index = () => {
               с психологом Катей Карпенко
             </motion.p>
           </motion.div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 relative z-10">
             <motion.div 
               whileHover={{ scale: 1.15, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
@@ -717,10 +724,10 @@ const Index = () => {
                   ease: "easeInOut"
                 }
               }}
-              className="relative flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
+              className="relative flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full backdrop-blur-lg shadow-ios-soft border border-white/60"
             >
               <motion.div
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-400/20"
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-warning/10 to-destructive/10"
                 animate={{ 
                   scale: [1, 1.1, 1],
                   opacity: [0.5, 0.8, 0.5]
@@ -741,7 +748,7 @@ const Index = () => {
               >
                 🔥
               </motion.span>
-              <span className="font-bold text-lg relative z-10">{streak}</span>
+              <span className="font-bold text-lg text-foreground relative z-10">{streak}</span>
             </motion.div>
             <motion.div 
               whileHover={{ scale: 1.15, rotate: -5 }}
@@ -756,18 +763,18 @@ const Index = () => {
                   ease: "easeInOut"
                 }
               }}
-              className="relative flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-lg shadow-lg border border-white/30"
+              className="relative flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full backdrop-blur-lg shadow-ios-soft border border-white/60"
             >
               <motion.div
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-300/20 to-yellow-500/20"
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-warning/10 to-warning/20"
                 animate={{ 
                   scale: [1, 1.05, 1],
                   opacity: [0.3, 0.6, 0.3]
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
-              <Award className="w-6 h-6 relative z-10" />
-              <span className="font-bold text-lg relative z-10">{level}</span>
+              <Award className="w-6 h-6 text-primary relative z-10" />
+              <span className="font-bold text-lg text-foreground relative z-10">{level}</span>
             </motion.div>
           </div>
         </div>
