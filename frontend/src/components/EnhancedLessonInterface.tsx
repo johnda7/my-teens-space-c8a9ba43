@@ -118,6 +118,7 @@ const EnhancedLessonInterface = ({
   const [hintsAvailable, setHintsAvailable] = useState(0);
   const [hintUsed, setHintUsed] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [hearts, setHearts] = useState(5); // New: Hearts system
   
   // Mission Checklist для первого урока
   const [missionChecklist, setMissionChecklist] = useState([
@@ -332,6 +333,7 @@ const EnhancedLessonInterface = ({
         }
       } else {
         setCombo(0);
+        setHearts(prev => Math.max(0, prev - 1)); // Lose a heart
         triggerHaptic('light');
         
         // Сбросить perfect score challenge
@@ -502,93 +504,63 @@ const EnhancedLessonInterface = ({
       </div>
 
       {/* Header - Glassmorphism */}
-      {lessonId === 'boundaries-w1-1' ? (
-        <div className="sticky top-0 z-50 bg-white/70 backdrop-blur-[40px] pt-4 pb-2 px-4 border-b border-white/20 shadow-sm">
-          <div className="flex items-center justify-between gap-4 max-w-3xl mx-auto">
-             <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onExit}
-              className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl"
-            >
-              <X className="w-6 h-6" />
-            </Button>
-            
-            <div className="flex-1">
-              <Stepper total={questions.length} current={currentQuestion} />
-            </div>
-
-            <div className="w-10" /> {/* Spacer for centering */}
-          </div>
-        </div>
-      ) : (
       <motion.div 
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 120, damping: 16 }}
-        className="sticky top-0 z-50 bg-white/70 backdrop-blur-[40px] border-b border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.05)]"
+        className="sticky top-0 z-50 bg-white/80 backdrop-blur-[40px] border-b border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.05)]"
       >
         <div className="max-w-3xl mx-auto px-4 pt-3 pb-4">
           <div className="flex items-center justify-between mb-3">
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon" 
               onClick={onExit}
-              className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all"
+              className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all rounded-xl"
             >
-              ✕ Выход
+              <X className="w-6 h-6" />
             </Button>
-            <h2 className="text-xs font-bold text-slate-400 tracking-[0.15em] uppercase">
-              {lessonTitle}
-            </h2>
-            <div className="flex items-center gap-2">
+
+            {/* Hearts & Combo */}
+            <div className="flex items-center gap-3">
               {combo > 0 && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="hidden sm:flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200"
+                  className="flex items-center gap-1 text-sm font-bold text-orange-500"
                 >
-                  🔥 COMBO x{combo}
+                  <span className="text-lg">🔥</span> {combo}
                 </motion.div>
               )}
+              
               <motion.div 
-                className="flex items-center gap-1.5 text-xs font-black text-purple-600 bg-purple-50 px-4 py-2 rounded-full border border-purple-100"
-                whileHover={{ scale: 1.02 }}
+                key={hearts}
+                initial={{ scale: 1.5, color: '#ef4444' }}
+                animate={{ scale: 1, color: '#ef4444' }}
+                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                className="flex items-center gap-1"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                +{totalXpEarned} XP
+                <Heart className={`w-6 h-6 ${hearts > 0 ? 'text-red-500 fill-red-500' : 'text-gray-300'}`} />
+                <span className="text-lg font-bold text-red-500">{hearts}</span>
               </motion.div>
             </div>
           </div>
-          <div className="mt-1 flex items-center gap-3">
-            <div className="relative flex-1">
-              <Progress 
-                value={progress} 
-                className="h-2 bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:via-pink-500 [&>div]:to-rose-500 rounded-full" 
-              />
-              {/* Светящаяся точка на конце прогресс-бара */}
-              <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.8, 1, 0.8]
-                }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                style={{ left: `${progress}%` }}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-pink-500 shadow-md"
-              />
+
+          {/* Progress Bar */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 h-4 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div 
+                className="absolute top-0 left-0 h-full bg-green-500 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <div className="absolute top-1 right-2 w-2/3 h-1 bg-white/30 rounded-full" />
+              </motion.div>
             </div>
-            <motion.span 
-              key={Math.floor(progress / 10)}
-              initial={{ scale: 1.3, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-[11px] text-slate-400 font-bold min-w-[52px] text-right"
-            >
-              {Math.round(progress)}%
-            </motion.span>
           </div>
         </div>
       </motion.div>
-      )}
 
       {/* Content */}
       <div className="relative max-w-3xl mx-auto px-3 pt-4 pb-8">
@@ -1086,14 +1058,22 @@ const EnhancedLessonInterface = ({
               </div>
 
               <div className="relative">
-              <div className="flex items-start justify-between gap-4 mb-8">
-              <motion.h3
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex-1 text-2xl md:text-3xl font-black text-slate-900 text-center leading-relaxed drop-shadow-sm"
-              >
-                {question.question}
-              </motion.h3>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentQuestion}
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -50, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  <div className="flex items-start justify-between gap-4 mb-8">
+                  <motion.h3
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex-1 text-2xl md:text-3xl font-black text-slate-900 text-center leading-relaxed drop-shadow-sm"
+                  >
+                    {question.question}
+                  </motion.h3>
               
               {/* Кнопка подсказки */}
               {hintsAvailable > 0 && !hintUsed && !showFeedback && (
@@ -1333,6 +1313,8 @@ const EnhancedLessonInterface = ({
                 </p>
               )}
 
+              </motion.div>
+              </AnimatePresence>
               </div>
             </motion.div>
 
@@ -1340,26 +1322,17 @@ const EnhancedLessonInterface = ({
             <AnimatePresence>
               {showFeedback && (
                 <motion.div
-                  initial={lessonId === 'boundaries-w1-1' ? { y: '100%' } : { scale: 0.9, opacity: 0, y: 20 }}
-                  animate={lessonId === 'boundaries-w1-1' ? { y: 0 } : { scale: 1, opacity: 1, y: 0 }}
-                  exit={lessonId === 'boundaries-w1-1' ? { y: '100%' } : { scale: 0.9, opacity: 0, y: -20 }}
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className={lessonId === 'boundaries-w1-1' 
-                    ? `fixed bottom-0 left-0 right-0 z-[100] p-6 pb-12 rounded-t-3xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] backdrop-blur-xl ${
-                        isCorrect === true 
-                          ? 'bg-white/95 border-green-200' 
-                          : isCorrect === false
-                          ? 'bg-white/95 border-rose-200'
-                          : 'bg-white/95 border-purple-200'
-                      }`
-                    : `relative overflow-hidden rounded-3xl shadow-lg border p-6 backdrop-blur-xl ${
-                        isCorrect === true 
-                          ? 'bg-green-50/90 border-green-200' 
-                          : isCorrect === false
-                          ? 'bg-rose-50/90 border-rose-200'
-                          : 'bg-purple-50/90 border-purple-200'
-                      }`
-                  }
+                  className={`fixed bottom-0 left-0 right-0 z-[100] p-6 pb-12 rounded-t-3xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] backdrop-blur-xl ${
+                    isCorrect === true 
+                      ? 'bg-white/95 border-green-200' 
+                      : isCorrect === false
+                      ? 'bg-white/95 border-rose-200'
+                      : 'bg-white/95 border-purple-200'
+                  }`}
                 >
                   {/* Subtle animated background glow */}
                   <motion.div
@@ -1377,7 +1350,7 @@ const EnhancedLessonInterface = ({
                     }`}
                   />
                   
-                  <div className="relative flex items-start gap-4">
+                  <div className="relative flex items-start gap-4 max-w-3xl mx-auto">
                     {isCorrect !== null && (
                       <motion.div 
                         className="flex-shrink-0"
@@ -1455,14 +1428,14 @@ const EnhancedLessonInterface = ({
                     </div>
                   </div>
 
-                  {/* Continue Button for First Lesson */}
-                  {lessonId === 'boundaries-w1-1' && (
+                  {/* Continue Button */}
+                  <div className="mt-6 max-w-3xl mx-auto">
                     <motion.button
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
                       onClick={handleContinue}
-                      className={`w-full mt-6 py-4 rounded-2xl font-black text-lg shadow-lg transition-transform active:scale-95 ${
+                      className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg transition-transform active:scale-95 ${
                         isCorrect === true 
                           ? 'bg-green-500 text-white shadow-green-200 hover:bg-green-600' 
                           : isCorrect === false
@@ -1472,10 +1445,57 @@ const EnhancedLessonInterface = ({
                     >
                       ПРОДОЛЖИТЬ
                     </motion.button>
-                  )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Game Over Overlay */}
+        <AnimatePresence>
+          {hearts === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[150] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+              >
+                <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Heart className="w-12 h-12 text-rose-500 fill-rose-500" />
+                </div>
+                
+                <h2 className="text-2xl font-black text-slate-800 mb-2">
+                  Сердечки закончились!
+                </h2>
+                
+                <p className="text-slate-600 mb-8">
+                  Ты допустил слишком много ошибок. Отдохни немного или восстанови сердечки, чтобы продолжить.
+                </p>
+                
+                <div className="space-y-3">
+                  <Button 
+                    onClick={() => setHearts(5)}
+                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-rose-500 to-pink-500 hover:brightness-110 text-white shadow-lg shadow-rose-200 rounded-2xl"
+                  >
+                    Восстановить ❤️
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost"
+                    onClick={onExit}
+                    className="w-full py-4 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl"
+                  >
+                    Выйти из урока
+                  </Button>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
