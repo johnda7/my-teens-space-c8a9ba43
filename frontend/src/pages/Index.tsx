@@ -387,6 +387,20 @@ const Index = () => {
   const renderLearningTab = () => {
     return (
       <div className="space-y-6">
+        {/* Кнопка переключения в Game Mode (Beta) */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Button 
+            onClick={() => navigate('/game-mode')}
+            className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold py-6 rounded-2xl shadow-xl border-2 border-white/20"
+          >
+            <Gamepad2 className="w-6 h-6 mr-2" />
+            Перейти в Game Mode (Beta)
+          </Button>
+        </motion.div>
+
         {/* Энергия и валюта - игровой header */}
         <div className="flex justify-between items-center gap-2">
           <EnergySystem />
@@ -642,7 +656,19 @@ const Index = () => {
               <span>Прогресс уровня</span>
               <span className="text-tg-text">{xp} / {nextLevelXP} XP</span>
             </div>
-            <Progress value={(xp / nextLevelXP) * 100} className="h-3 bg-tg-secondary-bg" />
+            <div className="relative rounded-full overflow-hidden">
+              <Progress value={(xp / nextLevelXP) * 100} className="h-4 bg-white/30" />
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-full"
+                animate={{ x: ["-100%", "200%"] }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity, 
+                  repeatDelay: 0.5,
+                  ease: "easeInOut" 
+                }}
+              />
+            </div>
           </div>
 
           {/* Быстрая статистика */}

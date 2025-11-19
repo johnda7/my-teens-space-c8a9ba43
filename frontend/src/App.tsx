@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import RoleSelection from "./pages/RoleSelection";
 import NotFound from "./pages/NotFound";
 import GamePage from "./pages/GamePage";
+import GameMode from "./pages/GameMode";
 import { RiveTest } from "./pages/RiveTest";
 // import ReplikaTest from "./pages/ReplikaTest";
 
@@ -72,6 +73,7 @@ const App = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/game" element={<GamePage />} />
+            <Route path="/game-mode" element={<GameMode />} />
             
             {/* Защищенные роуты с проверкой ролей */}
             <Route 
