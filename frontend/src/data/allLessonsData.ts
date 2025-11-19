@@ -82,20 +82,23 @@ export const ALL_LESSONS: Lesson[] = [
           text: 'Привет! Я Катя! 💜',
           subtext: 'Твой личный психолог-друг',
           animation: 'slideUp',
-          haptic: 'light'
+          haptic: 'light',
+          action: 'Познакомиться'
         },
         {
           katya: 'thinking',
           text: 'Представь свою комнату...',
           subtext: 'Это твоя территория, да?',
-          animation: 'fadeIn'
+          animation: 'fadeIn',
+          action: 'Ну допустим...'
         },
         {
           katya: 'default',
           text: 'А что если кто-то заходит без стука? 🤔',
           subtext: 'Бесит? Это про границы!',
           animation: 'pop',
-          haptic: 'medium'
+          haptic: 'medium',
+          action: 'Бесит жутко!'
         }
       ]
     },

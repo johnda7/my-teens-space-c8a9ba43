@@ -772,57 +772,45 @@ const EnhancedLessonInterface = ({
                 </motion.div>
 
                 {/* Текст с премиум-типографикой */}
-                <div className="space-y-4 max-w-lg">
+                <div className="space-y-4 max-w-lg w-full px-4">
                   <motion.h2
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-4xl md:text-5xl font-black bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] bg-clip-text text-transparent leading-tight drop-shadow-lg"
+                    className="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-lg text-center"
                   >
                     {intro.slides?.[introSlideIndex]?.text?.replace('Я Катя', `Я Катя, ${userName}`) || `Привет, ${userName}! Я Катя! 💜`}
                   </motion.h2>
                   
                   {intro.slides?.[introSlideIndex]?.subtext && (
-                    <motion.p
+                    <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="text-lg md:text-xl text-white/90 font-medium leading-relaxed drop-shadow-md"
+                      className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10"
                     >
-                      {intro.slides[introSlideIndex].subtext}
-                    </motion.p>
+                      <p className="text-lg text-white font-medium leading-relaxed text-center">
+                        {intro.slides[introSlideIndex].subtext}
+                      </p>
+                    </motion.div>
                   )}
                   
-                  {/* Voice Button */}
-                  <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      const textToSpeak = intro.slides?.[introSlideIndex]?.text + '. ' + (intro.slides?.[introSlideIndex]?.subtext || '');
-                      speakMessage(textToSpeak);
-                      triggerHaptic('light');
-                    }}
-                    className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-sm text-white hover:text-[#EE9AE5] transition-all flex items-center gap-2 mx-auto shadow-lg shadow-[#5961F9]/20"
-                  >
-                    🔊 Озвучить
-                  </motion.button>
+                  {/* Voice Button - REMOVED */}
+                  
                 </div>
 
                 {/* Прогресс слайдов */}
-                <div className="flex items-center gap-2 mt-6">
+                <div className="flex items-center justify-center gap-2 mt-8 mb-4">
                   {intro.slides?.map((_: any, idx: number) => (
                     <motion.div
                       key={idx}
                       animate={{
-                        width: idx === introSlideIndex ? 40 : 8,
+                        width: idx === introSlideIndex ? 32 : 8,
                         backgroundColor: idx === introSlideIndex 
                           ? '#EE9AE5' 
                           : 'rgba(255, 255, 255, 0.2)'
                       }}
-                      className="h-2 rounded-full"
+                      className="h-2 rounded-full transition-all duration-300"
                     />
                   ))}
                 </div>
@@ -831,12 +819,11 @@ const EnhancedLessonInterface = ({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  transition={{ delay: 0.3 }}
+                  className="w-full mt-8"
                 >
                   <Button
-                    className="px-8 py-4 text-base font-bold bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] hover:brightness-110 text-white rounded-full shadow-xl shadow-[#EE9AE5]/30 border-0"
+                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] hover:brightness-110 text-white rounded-2xl shadow-xl shadow-[#EE9AE5]/30 border-0 active:scale-95 transition-transform"
                     onClick={() => {
                       triggerHaptic('medium');
                       if (introSlideIndex < (intro.slides?.length || 1) - 1) {
@@ -848,7 +835,7 @@ const EnhancedLessonInterface = ({
                       }
                     }}
                   >
-                    {introSlideIndex < (intro.slides?.length || 1) - 1 ? 'Дальше ✨' : 'Погнали в миссию 🚀'}
+                    {intro.slides?.[introSlideIndex]?.action || (introSlideIndex < (intro.slides?.length || 1) - 1 ? 'Дальше ✨' : 'Погнали в миссию 🚀')}
                   </Button>
                 </motion.div>
               </motion.div>
@@ -980,21 +967,7 @@ const EnhancedLessonInterface = ({
                 />
               )}
               
-              {/* Voice button для Кати */}
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => {
-                  speakMessage(katyaMessage);
-                  triggerHaptic('light');
-                }}
-                className="absolute top-2 right-2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 flex items-center justify-center text-lg transition-all shadow-lg shadow-[#5961F9]/20 z-10"
-              >
-                🔊
-              </motion.button>
+              {/* Voice button для Кати - REMOVED as per user request */}
               
               <div className="relative w-44 h-44 md:w-56 md:h-56 drop-shadow-[0_15px_60px_rgba(139,92,246,0.5)]">
                 <RiveKatya
