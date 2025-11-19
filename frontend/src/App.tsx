@@ -6,11 +6,12 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import ParentDashboard from "./pages/ParentDashboard";
-import ParentApp from "./pages/ParentApp";
+import ParentHub from "./pages/ParentHub";
 import CuratorDashboard from "./pages/CuratorDashboard";
 import LoginPage from "./pages/LoginPage";
 import RoleSelection from "./pages/RoleSelection";
 import NotFound from "./pages/NotFound";
+import GamePage from "./pages/GamePage";
 import { RiveTest } from "./pages/RiveTest";
 // import ReplikaTest from "./pages/ReplikaTest";
 
@@ -48,10 +49,11 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
 };
 
 const App = () => {
-  // Basename только для GitHub Pages, пустой для Lovable preview
-  const basename = window.location.hostname.includes('github.io') 
+  // Basename для GitHub Pages или если путь содержит /my-teens-space-c8a9ba43/
+  const basename = window.location.hostname.includes('github.io') || 
+                   window.location.pathname.includes('/my-teens-space-c8a9ba43')
     ? '/my-teens-space-c8a9ba43' 
-    : ''; // Пустой для preview/localhost
+    : ''; // Пустой для обычного localhost
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -69,6 +71,7 @@ const App = () => {
             {/* Публичные роуты */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/role-selection" element={<RoleSelection />} />
+            <Route path="/game" element={<GamePage />} />
             
             {/* Защищенные роуты с проверкой ролей */}
             <Route 
@@ -94,7 +97,7 @@ const App = () => {
               path="/parent-app" 
               element={
                 <ProtectedRoute allowedRoles={['parent', 'parent_learning']}>
-                  <ParentApp />
+                  <ParentHub />
                 </ProtectedRoute>
               } 
             />

@@ -5,7 +5,11 @@ import WheelOfBalance from '@/components/WheelOfBalance';
 import { ArrowLeft, TrendingUp, Award, Calendar, BookOpen, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const ParentDashboard = () => {
+interface ParentDashboardProps {
+  embedded?: boolean;
+}
+
+const ParentDashboard = ({ embedded = false }: ParentDashboardProps) => {
   const navigate = useNavigate();
   
   const childName = localStorage.getItem('childName') || 'Ваш ребенок';
@@ -30,27 +34,29 @@ const ParentDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20">
-      <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white shadow-2xl sticky top-0 z-40"
-      >
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="text-white hover:bg-white/20"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Родительский кабинет</h1>
-            <p className="text-sm opacity-90">Прогресс: {childName}</p>
+    <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20 ${embedded ? 'pt-4' : ''}`}>
+      {!embedded && (
+        <motion.div
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white shadow-2xl sticky top-0 z-40"
+        >
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="text-white hover:bg-white/20"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Родительский кабинет</h1>
+              <p className="text-sm opacity-90">Прогресс: {childName}</p>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         <motion.div

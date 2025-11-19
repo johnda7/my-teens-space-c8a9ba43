@@ -20,6 +20,18 @@ export const useTelegram = () => {
     if (WebApp.initDataUnsafe?.user) {
       setUser(WebApp.initDataUnsafe.user as TelegramUser);
       setIsReady(true);
+      
+      // Устанавливаем CSS переменные темы
+      const params = WebApp.themeParams;
+      const root = document.documentElement;
+      
+      if (params.bg_color) root.style.setProperty('--tg-bg', params.bg_color);
+      if (params.text_color) root.style.setProperty('--tg-text', params.text_color);
+      if (params.hint_color) root.style.setProperty('--tg-hint', params.hint_color);
+      if (params.link_color) root.style.setProperty('--tg-link', params.link_color);
+      if (params.button_color) root.style.setProperty('--tg-button', params.button_color);
+      if (params.button_text_color) root.style.setProperty('--tg-button-text', params.button_text_color);
+      if (params.secondary_bg_color) root.style.setProperty('--tg-secondary-bg', params.secondary_bg_color);
     } else {
       // Для разработки вне Telegram
       console.warn('Telegram WebApp не доступен. Используйте тестовый режим.');
@@ -75,6 +87,12 @@ export const useTelegram = () => {
     }
   };
 
+  const selectionFeedback = () => {
+    if (WebApp.HapticFeedback) {
+      WebApp.HapticFeedback.selectionChanged();
+    }
+  };
+
   const close = () => {
     WebApp.close();
   };
@@ -100,6 +118,7 @@ export const useTelegram = () => {
     hideBackButton,
     hapticFeedback,
     notificationFeedback,
+    selectionFeedback,
     close,
     openLink,
     openTelegramLink,

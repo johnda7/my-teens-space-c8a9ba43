@@ -100,13 +100,13 @@ export default function RoleplaySimulator({ scenarios, onComplete }: RoleplaySim
       </div>
 
       {/* Scenario Context */}
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300">
+      <Card className="bg-white/50 border border-purple-200 backdrop-blur-xl shadow-sm">
         <CardContent className="p-4">
-          <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-purple-900">
-            <MessageCircle size={16} className="text-purple-600" />
+          <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-purple-700">
+            <MessageCircle size={16} className="text-purple-500" />
             {currentScenario.title}
           </h3>
-          <p className="text-xs text-slate-700 leading-relaxed">{currentScenario.context}</p>
+          <p className="text-xs text-slate-600 leading-relaxed">{currentScenario.context}</p>
         </CardContent>
       </Card>
 
@@ -120,13 +120,13 @@ export default function RoleplaySimulator({ scenarios, onComplete }: RoleplaySim
           className="flex gap-2"
         >
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-200">
               <User size={18} className="text-white" />
             </div>
           </div>
-          <Card className="flex-1 bg-white border-2 border-purple-200">
+          <Card className="flex-1 bg-white border border-slate-200 shadow-sm">
             <CardContent className="p-3">
-              <p className="text-xs font-medium text-purple-900 mb-1">{currentScenario.npc.name}</p>
+              <p className="text-xs font-medium text-purple-600 mb-1">{currentScenario.npc.name}</p>
               <p className="text-sm text-slate-800">{currentScenario.npc.messages[currentMessageIndex]}</p>
             </CardContent>
           </Card>
@@ -139,22 +139,22 @@ export default function RoleplaySimulator({ scenarios, onComplete }: RoleplaySim
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-300">
+          <Card className="bg-purple-50 border border-purple-100">
             <CardContent className="p-4">
-              <label className="block text-xs font-semibold text-emerald-900 mb-2">
+              <label className="block text-xs font-semibold text-purple-700 mb-2">
                 Твой ответ:
               </label>
               <textarea
                 value={userResponse}
                 onChange={e => setUserResponse(e.target.value)}
                 placeholder="Напиши, как бы ты ответил в этой ситуации..."
-                className="w-full h-24 p-3 border-2 border-emerald-300 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                className="w-full h-24 bg-white border border-purple-200 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none shadow-inner"
               />
               <div className="flex gap-2 mt-3">
                 <Button
                   onClick={handleResponse}
                   disabled={!userResponse.trim()}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold shadow-lg"
+                  className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-lg shadow-purple-200 border-0"
                 >
                   Отправить
                   <ArrowRight size={16} className="ml-2" />
@@ -162,7 +162,7 @@ export default function RoleplaySimulator({ scenarios, onComplete }: RoleplaySim
                 <Button
                   variant="outline"
                   onClick={handleSkip}
-                  className="border-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                  className="border border-purple-200 text-purple-600 hover:bg-purple-50 bg-transparent"
                 >
                   Пропустить
                 </Button>
@@ -180,23 +180,23 @@ export default function RoleplaySimulator({ scenarios, onComplete }: RoleplaySim
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
           >
-            <Card className={`border-2 ${
+            <Card className={`border ${
               responseQuality === 'excellent' 
-                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-400' 
+                ? 'bg-emerald-500/10 border-emerald-500/50' 
                 : responseQuality === 'good'
-                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-400'
-                : 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-400'
+                ? 'bg-blue-500/10 border-blue-500/50'
+                : 'bg-amber-500/10 border-amber-500/50'
             }`}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   {responseQuality === 'excellent' && (
-                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                      <CheckCircle size={24} className="text-white" />
+                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
+                      <CheckCircle size={24} className="text-emerald-400" />
                     </div>
                   )}
                   {responseQuality === 'good' && (
-                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
-                      <Sparkles size={24} className="text-white" />
+                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+                      <Sparkles size={24} className="text-blue-400" />
                     </div>
                   )}
                   {responseQuality === 'needs-work' && (

@@ -116,7 +116,7 @@ const ModuleRoom = ({
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-white"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg"
                   style={{
                     background: `linear-gradient(135deg, ${
                       theme === 'boundaries' ? '#a855f7, #ec4899' :
@@ -126,7 +126,9 @@ const ModuleRoom = ({
                     })`,
                   }}
                 >
-                  {icon}
+                  <div className="scale-75">
+                    {icon}
+                  </div>
                 </motion.div>
                 <div className="flex-1">
                   <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 ios-headline">

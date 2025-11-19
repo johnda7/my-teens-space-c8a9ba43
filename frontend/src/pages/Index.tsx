@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Calendar, MessageCircle, Users, Award, Target, Shield, Heart, Video } from 'lucide-react';
+import { Home, Calendar, MessageCircle, Users, Award, Target, Shield, Heart, Video, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
@@ -14,7 +14,7 @@ import BalanceAssessment from '@/components/BalanceAssessment';
 import WheelOfBalance from '@/components/WheelOfBalance';
 import AnimatedKatyaV2 from '@/components/AnimatedKatyaV2';
 import { EnergySystem } from '@/components/EnergySystem';
-import { CurrencyDisplay } from '@/components/CurrencyDisplay';
+import { CurrencyDisplay, useCurrency } from '@/components/CurrencyDisplay';
 import { DailyQuests, useQuestProgress } from '@/components/DailyQuests';
 import { EmotionMatchGame } from '@/components/EmotionMatchGame';
 import { Shop, useInventory } from '@/components/Shop';
@@ -31,7 +31,7 @@ import '@/styles/game.css';
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { haptic, isInTelegram, user } = useTelegram();
+  const { haptic, isInTelegram, user, themeParams, selectionFeedback } = useTelegram();
   const questProgress = useQuestProgress();
   const inventory = useInventory();
   const achievementsHook = useAchievements();
@@ -54,14 +54,7 @@ const Index = () => {
   const [currentWeek, setCurrentWeek] = useState(1);
   
   // Игровые ресурсы
-  const [coins, setCoins] = useState(() => {
-    const saved = localStorage.getItem('userCoins');
-    return saved ? parseInt(saved) : 0;
-  });
-  const [gems, setGems] = useState(() => {
-    const saved = localStorage.getItem('userGems');
-    return saved ? parseInt(saved) : 0;
-  });
+  const { coins, gems, addCoins, addGems, spendCoins, spendGems } = useCurrency();
   
   // Колесо баланса
   const [showBalanceWheel, setShowBalanceWheel] = useState(false);
@@ -209,14 +202,46 @@ const Index = () => {
   );
 
   const modules = [
-    { id: 'boundaries', name: 'Границы', icon: Shield, theme: 'boundaries' as const, progress: 25 },
-    { id: 'confidence', name: 'Уверенность', icon: Target, theme: 'confidence' as const, progress: 10 },
-    { id: 'emotions', name: 'Эмоции', icon: Heart, theme: 'emotions' as const, progress: 0 },
-    { id: 'relationships', name: 'Отношения', icon: Users, theme: 'relationships' as const, progress: 0 },
+    { id: 'boundaries', name: 'Границы', icon: Shield, theme: 'boundaries' as const, progress: 25, color: 'from-purple-500/10 to-pink-500/10' },
+    { id: 'confidence', name: 'Уверенность', icon: Target, theme: 'confidence' as const, progress: 10, color: 'from-blue-500/10 to-cyan-500/10' },
+    { id: 'emotions', name: 'Эмоции', icon: Heart, theme: 'emotions' as const, progress: 0, color: 'from-pink-500/10 to-rose-500/10' },
+    { id: 'relationships', name: 'Отношения', icon: Users, theme: 'relationships' as const, progress: 0, color: 'from-green-500/10 to-emerald-500/10' },
   ];
 
+  // Auto-start first lesson for new users
+  useEffect(() => {
+    const completedLessons = JSON.parse(localStorage.getItem('completedLessons') || '[]');
+    const hasStartedFirstLesson = localStorage.getItem('hasStartedFirstLesson');
+    
+    if (completedLessons.length === 0 && activeTab === 'learning' && !currentLesson && !hasStartedFirstLesson) {
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        console.log('🚀 Auto-starting first lesson for new user');
+        handleLessonStart('boundaries-w1-1');
+        localStorage.setItem('hasStartedFirstLesson', 'true');
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, currentLesson]);
+
   const handleLessonStart = (lessonId: string) => {
-    haptic?.('light');
+    console.log('👉 handleLessonStart called with:', lessonId);
+    try {
+      haptic?.('light');
+    } catch (e) {
+      console.error('Haptic error:', e);
+    }
+
+    // Для миссии дня сразу отправляем в урок без лишнего превью
+    if (lessonId === 'boundaries-w1-1') {
+      console.log('🚀 Fast starting boundaries-w1-1');
+      setCurrentModule('boundaries');
+      setCurrentLesson('boundaries-w1-1');
+      setShowLessonPreview(false);
+      return;
+    }
+
     const lesson = COMPLETE_LESSONS.find(l => l.id === lessonId);
     if (lesson) {
       setSelectedLesson(lesson);
@@ -316,11 +341,7 @@ const Index = () => {
     
     // Начисляем монеты (10 монет за урок + бонус за XP)
     const coinsEarned = 10 + Math.floor(finalXP / 10);
-    setCoins(prev => {
-      const newCoins = prev + coinsEarned;
-      localStorage.setItem('userCoins', newCoins.toString());
-      return newCoins;
-    });
+    addCoins(coinsEarned);
     
     // Обновляем дату последней активности для стрика
     const today = new Date().toDateString();
@@ -385,8 +406,6 @@ const Index = () => {
               )}
             </motion.button>
             <CurrencyDisplay 
-              coins={coins} 
-              gems={gems}
               onCoinsClick={() => setShowShop(true)}
               onGemsClick={() => setShowShop(true)}
             />
@@ -400,11 +419,13 @@ const Index = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-orange-400 to-pink-500 p-4 rounded-3xl shadow-lg"
+          className="bg-tg-bg/60 backdrop-blur-[20px] border border-tg-hint/20 p-4 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
         >
           <div className="flex items-center gap-2 mb-3">
-            <Target className="w-5 h-5 text-white" />
-            <h3 className="text-white font-bold">Дневные миссии</h3>
+            <div className="p-2 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl">
+              <Target className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-tg-text font-bold">Дневные миссии</h3>
           </div>
           <DailyQuests />
         </motion.div>
@@ -414,21 +435,25 @@ const Index = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/80 backdrop-blur-sm p-5 rounded-3xl shadow-lg border border-white/60"
+            className="relative z-10 bg-tg-bg/70 backdrop-blur-[20px] p-5 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-tg-hint/20"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
                 <Target className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Урок дня</h3>
-                <p className="text-xs text-slate-600">+{dailyMissionLesson.xp} XP • +{10 + Math.floor(dailyMissionLesson.xp / 10)} 🪙</p>
+                <h3 className="text-sm font-bold text-tg-text">Урок дня</h3>
+                <p className="text-xs text-tg-hint">+{dailyMissionLesson.xp} XP • +{10 + Math.floor(dailyMissionLesson.xp / 10)} 🪙</p>
               </div>
             </div>
-            <p className="text-sm text-slate-700 mb-3">{dailyMissionLesson.title}</p>
+            <p className="text-sm text-tg-text mb-3 font-medium">{dailyMissionLesson.title}</p>
             <Button
-              onClick={() => handleLessonStart(dailyMissionLesson.id)}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('⚡ Button clicked!');
+                handleLessonStart(dailyMissionLesson.id);
+              }}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 relative z-20 cursor-pointer active:scale-95 transition-transform rounded-xl shadow-lg shadow-purple-500/20"
             >
               Начать урок ⚡
             </Button>
@@ -437,28 +462,28 @@ const Index = () => {
 
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl text-center">
+          <div className="bg-tg-bg/80 backdrop-blur-xl border border-tg-hint/20 p-4 rounded-2xl text-center shadow-sm hover:shadow-md transition-shadow">
             <div className="text-2xl mb-1">🔥</div>
-            <div className="text-xs text-slate-600">Стрик</div>
-            <div className="text-lg font-bold text-slate-900">{streak}</div>
+            <div className="text-xs text-tg-hint font-medium uppercase tracking-wider">Стрик</div>
+            <div className="text-xl font-bold text-tg-text">{streak}</div>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl text-center">
+          <div className="bg-tg-bg/80 backdrop-blur-xl border border-tg-hint/20 p-4 rounded-2xl text-center shadow-sm hover:shadow-md transition-shadow">
             <div className="text-2xl mb-1">⭐</div>
-            <div className="text-xs text-slate-600">Уровень</div>
-            <div className="text-lg font-bold text-slate-900">{level}</div>
+            <div className="text-xs text-tg-hint font-medium uppercase tracking-wider">Уровень</div>
+            <div className="text-xl font-bold text-tg-text">{level}</div>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl text-center">
+          <div className="bg-tg-bg/80 backdrop-blur-xl border border-tg-hint/20 p-4 rounded-2xl text-center shadow-sm hover:shadow-md transition-shadow">
             <div className="text-2xl mb-1">📚</div>
-            <div className="text-xs text-slate-600">Модуль</div>
-            <div className="text-lg font-bold text-slate-900">{currentModule || 'N/A'}</div>
+            <div className="text-xs text-tg-hint font-medium uppercase tracking-wider">Модуль</div>
+            <div className="text-xl font-bold text-tg-text truncate px-1">{currentModule ? modules.find(m => m.id === currentModule)?.name : 'Старт'}</div>
           </div>
         </div>
 
         {/* Quick actions */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Button
             variant="outline"
-            className="w-full justify-start bg-white/80 backdrop-blur-sm"
+            className="w-full justify-start bg-tg-bg/80 backdrop-blur-xl border-tg-hint/20 h-auto py-4 px-5 rounded-2xl shadow-sm hover:shadow-md transition-all hover:bg-tg-bg/90"
             onClick={() => {
               if (!initialScores) {
                 setShowBalanceWheel(true);
@@ -469,48 +494,71 @@ const Index = () => {
               }
             }}
           >
-            {!initialScores ? '🎯 Стартовый тест баланса' : '📊 Измерить баланс'}
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
+                <Target className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <div className="font-bold text-tg-text text-base">{!initialScores ? 'Стартовый тест' : 'Колесо баланса'}</div>
+                <div className="text-xs text-tg-hint mt-0.5">Проверь свои сферы жизни</div>
+              </div>
+            </div>
           </Button>
           
           {/* Мини-игра дня */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
             onClick={() => setShowMiniGame(true)}
-            className="w-full bg-gradient-to-r from-purple-500 to-blue-500 p-5 rounded-2xl text-left shadow-lg"
+            className="w-full bg-tg-bg/80 backdrop-blur-xl border border-tg-hint/20 p-1 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden group"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-white font-bold mb-1">🎮 Мини-игра дня</h3>
-                <p className="text-white/80 text-sm">Найди пары эмоций</p>
+            <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4 rounded-xl flex items-center justify-between group-hover:from-purple-500/20 group-hover:to-blue-500/20 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="text-3xl bg-tg-bg rounded-xl p-2 shadow-sm">🎮</div>
+                <div className="text-left">
+                  <h3 className="text-tg-text font-bold text-base">Мини-игра</h3>
+                  <p className="text-tg-hint text-xs mt-0.5">Найди пары эмоций</p>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-3xl">🏆</span>
-                <p className="text-white text-xs mt-1">+50 XP • +100 🪙</p>
+              <div className="text-right bg-tg-bg/50 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-tg-hint/20">
+                <p className="text-purple-500 text-xs font-bold">+50 XP</p>
               </div>
             </div>
           </motion.button>
         </div>
 
         {/* Модули */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-slate-900">Модули обучения</h3>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-4">
+          <h3 className="text-lg font-bold text-tg-text px-1">Модули обучения</h3>
+          <div className="grid grid-cols-2 gap-4">
             {modules.map((module) => {
               const Icon = module.icon;
               return (
                 <motion.div
                   key={module.id}
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setCurrentModule(module.id)}
-                  className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                  className={`
+                    relative overflow-hidden rounded-3xl p-5 cursor-pointer transition-all
+                    bg-tg-bg/80 backdrop-blur-xl border border-tg-hint/20 shadow-sm hover:shadow-md
+                    group
+                  `}
                 >
-                  <Icon className="w-6 h-6 text-purple-600 mb-2" />
-                  <h4 className="text-sm font-semibold text-slate-900 mb-1">{module.name}</h4>
-                  <div className="flex items-center gap-2">
-                    <Progress value={module.progress} className="h-1 flex-1" />
-                    <span className="text-xs text-slate-600">{module.progress}%</span>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${module.color || 'from-purple-500/10 to-pink-500/10'} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  
+                  <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-tg-bg shadow-sm flex items-center justify-center text-tg-text group-hover:scale-110 transition-transform">
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-bold text-tg-text text-base leading-tight mb-2">{module.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <Progress value={module.progress} className="h-1.5 flex-1 bg-tg-secondary-bg" />
+                        <span className="text-[10px] font-bold text-tg-hint">{module.progress}%</span>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               );
@@ -523,9 +571,9 @@ const Index = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-white/80 backdrop-blur-sm p-4 rounded-3xl"
+            className="bg-tg-bg/80 backdrop-blur-xl border border-tg-hint/20 p-6 rounded-3xl shadow-sm"
           >
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Твой баланс</h3>
+            <h3 className="text-lg font-bold text-tg-text mb-4">Твой баланс</h3>
             <WheelOfBalance
               scores={finalScores || initialScores}
               type={finalScores ? 'comparison' : 'initial'}
@@ -541,8 +589,8 @@ const Index = () => {
   const renderCheckInTab = () => {
     return (
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-slate-900">Чек-ин с Катей</h2>
-        <p className="text-xs text-slate-600">
+        <h2 className="text-sm font-semibold text-tg-text">Чек-ин с Катей</h2>
+        <p className="text-xs text-tg-hint">
           Здесь будет ежедневный чек-ин и практики для сна и расслабления, перенесённые из старого приложения.
         </p>
       </div>
@@ -552,8 +600,8 @@ const Index = () => {
   const renderChatTab = () => {
     return (
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-slate-900">Чат с Катей</h2>
-        <p className="text-xs text-slate-600">
+        <h2 className="text-sm font-semibold text-tg-text">Чат с Катей</h2>
+        <p className="text-xs text-tg-hint">
           Сюда добавим живой диалог с Катей и быстрые подсказки.
         </p>
       </div>
@@ -563,8 +611,8 @@ const Index = () => {
   const renderGroupTab = () => {
     return (
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-slate-900">Группа</h2>
-        <p className="text-xs text-slate-600">
+        <h2 className="text-sm font-semibold text-tg-text">Группа</h2>
+        <p className="text-xs text-tg-hint">
           Здесь будет доступ к Telegram-группе и эфиром. Можно будет открыть чат прямо из приложения.
         </p>
       </div>
@@ -575,44 +623,44 @@ const Index = () => {
     return (
       <div className="space-y-6">
         {/* Статистика пользователя */}
-        <div className="bg-white/90 backdrop-blur-sm p-5 rounded-3xl shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl">
+        <div className="bg-tg-bg/80 backdrop-blur-xl border border-tg-hint/20 p-6 rounded-3xl shadow-sm">
+          <div className="flex items-center gap-5 mb-6">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-3xl shadow-lg shadow-purple-500/20">
               😊
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900">
+              <h3 className="text-2xl font-bold text-tg-text">
                 {user?.first_name || 'Ученик'}
               </h3>
-              <p className="text-sm text-slate-600">Уровень {level}</p>
+              <p className="text-tg-hint font-medium">Уровень {level}</p>
             </div>
           </div>
 
           {/* Прогресс до следующего уровня */}
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-slate-600 mb-2">
-              <span>Прогресс</span>
-              <span>{xp} / {nextLevelXP} XP</span>
+          <div className="mb-6">
+            <div className="flex justify-between text-sm font-medium text-tg-hint mb-2">
+              <span>Прогресс уровня</span>
+              <span className="text-tg-text">{xp} / {nextLevelXP} XP</span>
             </div>
-            <Progress value={(xp / nextLevelXP) * 100} className="h-2" />
+            <Progress value={(xp / nextLevelXP) * 100} className="h-3 bg-tg-secondary-bg" />
           </div>
 
           {/* Быстрая статистика */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3 bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl">
+            <div className="text-center p-4 bg-orange-500/10 rounded-2xl border border-orange-500/20">
               <div className="text-2xl mb-1">🔥</div>
-              <div className="text-xs text-slate-600">Стрик</div>
-              <div className="text-lg font-bold text-slate-900">{streak}</div>
+              <div className="text-xs text-tg-hint font-medium uppercase tracking-wider">Стрик</div>
+              <div className="text-xl font-bold text-tg-text">{streak}</div>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+            <div className="text-center p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
               <div className="text-2xl mb-1">🪙</div>
-              <div className="text-xs text-slate-600">Монеты</div>
-              <div className="text-lg font-bold text-slate-900">{coins}</div>
+              <div className="text-xs text-tg-hint font-medium uppercase tracking-wider">Монеты</div>
+              <div className="text-xl font-bold text-tg-text">{coins}</div>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
+            <div className="text-center p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
               <div className="text-2xl mb-1">💎</div>
-              <div className="text-xs text-slate-600">Кристаллы</div>
-              <div className="text-lg font-bold text-slate-900">{gems}</div>
+              <div className="text-xs text-tg-hint font-medium uppercase tracking-wider">Кристаллы</div>
+              <div className="text-xl font-bold text-tg-text">{gems}</div>
             </div>
           </div>
         </div>
@@ -649,60 +697,14 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20 relative overflow-hidden">
-      {/* Animated Background Orbs - Using Design System Colors */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <motion.div
-          className="absolute top-20 -left-20 w-72 h-72 rounded-full blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.2))'
-          }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute top-1/2 right-0 w-96 h-96 rounded-full blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, hsl(var(--secondary) / 0.3), hsl(var(--primary) / 0.2))'
-          }}
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.2, 0.4, 0.2],
-            x: [0, -30, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-20 left-1/3 w-80 h-80 rounded-full blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, hsl(var(--accent) / 0.25), hsl(var(--secondary) / 0.2))'
-          }}
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.25, 0.4, 0.25],
-            x: [0, -40, 0],
-            y: [0, -20, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
+    <div 
+      className="min-h-screen bg-tg-secondary-bg text-tg-text font-sans selection:bg-purple-100 pb-24 relative overflow-hidden"
+    >
+      {/* Organic background blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-200/30 blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-200/30 blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[60%] h-[60%] rounded-full bg-pink-200/20 blur-[130px]" />
       </div>
 
       {/* Header with glassmorphism */}
@@ -714,7 +716,7 @@ const Index = () => {
           stiffness: 400,
           damping: 17
         }}
-        className="relative bg-white/70 backdrop-blur-[40px] p-6 text-gray-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sticky top-0 z-40 border-b border-white/20"
+        className="relative bg-tg-bg/80 backdrop-blur-[40px] p-6 text-tg-text shadow-[0_8px_32px_rgba(0,0,0,0.12)] sticky top-0 z-40 border-b border-tg-hint/20"
       >
         
         <div className="relative flex items-center justify-between mb-4">
@@ -877,7 +879,7 @@ const Index = () => {
             <div className="space-y-4">
               <button 
                 onClick={() => setCurrentModule(null)}
-                className="mb-4 px-4 py-2 bg-white/80 rounded-lg"
+                className="mb-4 px-4 py-2 bg-tg-bg/80 rounded-lg text-tg-text"
               >
                 ← Назад
               </button>
@@ -888,10 +890,10 @@ const Index = () => {
                     key={lesson.id}
                     onClick={() => handleLessonStart(lesson.id)}
                     disabled={lesson.status === 'locked'}
-                    className="w-full p-4 bg-white/80 backdrop-blur rounded-2xl text-left disabled:opacity-50"
+                    className="w-full p-4 bg-tg-bg/80 backdrop-blur rounded-2xl text-left disabled:opacity-50"
                   >
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">{lesson.title}</span>
+                      <span className="font-medium text-tg-text">{lesson.title}</span>
                       <span className="text-sm text-purple-600">+{lesson.xp} XP</span>
                     </div>
                   </button>
@@ -933,23 +935,6 @@ const Index = () => {
         {showMiniGame && (
           <EmotionMatchGame
             onClose={() => setShowMiniGame(false)}
-            onComplete={(score) => {
-              // Начисляем награды за мини-игру
-              const xpEarned = Math.floor(score / 10);
-              const coinsEarned = Math.floor(score / 5);
-              
-              setXp(prev => prev + xpEarned);
-              setCoins(prev => {
-                const newCoins = prev + coinsEarned;
-                localStorage.setItem('userCoins', newCoins.toString());
-                return newCoins;
-              });
-              
-              // Обновляем квест мини-игры
-              questProgress.updateMiniGameQuest();
-              
-              setShowMiniGame(false);
-            }}
           />
         )}
 
@@ -962,17 +947,9 @@ const Index = () => {
             onPurchase={(item) => {
               // Списываем валюту
               if (item.currency === 'coins') {
-                setCoins(prev => {
-                  const newCoins = prev - item.price;
-                  localStorage.setItem('userCoins', newCoins.toString());
-                  return newCoins;
-                });
+                spendCoins(item.price);
               } else {
-                setGems(prev => {
-                  const newGems = prev - item.price;
-                  localStorage.setItem('userGems', newGems.toString());
-                  return newGems;
-                });
+                spendGems(item.price);
               }
 
               // Добавляем в инвентарь
@@ -1017,37 +994,43 @@ const Index = () => {
       </AnimatePresence>
 
       {/* Bottom navigation - табы как в GameMode */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
-        <div className="grid grid-cols-5 gap-2 rounded-3xl bg-white/90 backdrop-blur-xl shadow-[0_18px_45px_rgba(15,23,42,0.22)] border border-white/80 px-3 py-2">
-          {[
-            { id: 'learning' as const, label: 'Учёба', icon: Home },
-            { id: 'checkin' as const, label: 'Чек-ин', icon: Calendar },
-            { id: 'chat' as const, label: 'Чат', icon: MessageCircle },
-            { id: 'group' as const, label: 'Группа', icon: Users },
-            { id: 'profile' as const, label: 'Профиль', icon: Award },
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  haptic?.('light');
-                }}
-                className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[10px] font-medium transition-all ${
-                  isActive
-                    ? 'bg-purple-600 text-white shadow-[0_10px_30px_rgba(147,51,234,0.45)]'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      {!currentLesson && (
+        <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
+          <div className="grid grid-cols-5 gap-2 rounded-3xl bg-tg-secondary-bg/90 backdrop-blur-xl shadow-[0_18px_45px_rgba(15,23,42,0.22)] border border-tg-hint/20 px-3 py-2">
+            {[
+              { id: 'learning' as const, label: 'Учёба', icon: Home },
+              { id: 'checkin' as const, label: 'Чек-ин', icon: Calendar },
+              { id: 'game' as const, label: 'Игра', icon: Gamepad2 },
+              { id: 'chat' as const, label: 'Чат', icon: MessageCircle },
+              { id: 'profile' as const, label: 'Профиль', icon: Award },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === 'game') {
+                      navigate('/game');
+                    } else {
+                      setActiveTab(item.id as any);
+                    }
+                    selectionFeedback?.();
+                  }}
+                  className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[10px] font-medium transition-all ${
+                    isActive
+                      ? 'bg-tg-button text-tg-button-text shadow-[0_10px_30px_rgba(147,51,234,0.45)]'
+                      : 'text-tg-hint hover:bg-tg-bg/50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 };

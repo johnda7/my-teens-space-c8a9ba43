@@ -6,7 +6,25 @@ import { Slider } from './ui/slider';
 import { Progress } from './ui/progress';
 import { RiveKatya } from './RiveKatya';
 import { Question } from '@/data/allLessonsData';
-import { CheckCircle2, XCircle, ArrowRight, Sparkles, Zap, Star } from 'lucide-react';
+import { 
+  X, 
+  Check, 
+  ChevronRight, 
+  Star, 
+  Trophy, 
+  Sparkles, 
+  Heart, 
+  Shield, 
+  Target, 
+  Zap,
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  Volume2,
+  Pause,
+  Play
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { InteractiveZones } from './LessonParts/InteractiveZones';
 import { SwipeCards } from './LessonParts/SwipeCards';
@@ -31,6 +49,34 @@ interface EnhancedLessonInterfaceProps {
   completionMeta?: any;
 }
 
+const Stepper = ({ total, current }: { total: number; current: number }) => {
+  return (
+    <div className="flex gap-1.5 w-full max-w-md mx-auto px-2">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-2.5 flex-1 rounded-full transition-all duration-500 ${
+            i < current
+              ? 'bg-green-500 shadow-sm'
+              : i === current
+              ? 'bg-slate-200 relative overflow-hidden'
+              : 'bg-slate-200'
+          }`}
+        >
+          {i === current && (
+             <motion.div
+               className="absolute inset-0 bg-green-500"
+               initial={{ x: '-100%' }}
+               animate={{ x: '0%' }}
+               transition={{ duration: 0.5 }}
+             />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const EnhancedLessonInterface = ({ 
   questions, 
   onComplete, 
@@ -41,6 +87,7 @@ const EnhancedLessonInterface = ({
   intro,
   completionMeta
 }: EnhancedLessonInterfaceProps) => {
+  console.log('Rendering EnhancedLessonInterface', { lessonId, questionsLength: questions?.length });
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [showFeedback, setShowFeedback] = useState(false);
@@ -79,7 +126,16 @@ const EnhancedLessonInterface = ({
     { id: 'practice', label: 'Попробовать поставить границу', completed: false }
   ]);
 
+  if (!questions || questions.length === 0) {
+    return <div className="flex items-center justify-center h-screen text-white">Загрузка урока...</div>;
+  }
+
   const question = questions[currentQuestion];
+  
+  if (!question) {
+    return <div className="flex items-center justify-center h-screen text-white">Ошибка: Вопрос не найден</div>;
+  }
+
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const isFirstLesson = lessonId === 'boundaries-w1-1';
   const missionCinematicEnabled = Boolean(isFirstLesson && completionMeta);
@@ -311,12 +367,15 @@ const EnhancedLessonInterface = ({
         triggerConfetti();
       }
       
-      setTimeout(() => {
-        setShowFeedback(false);
-        setIsCorrect(null);
-        setKatyaMood('thinking');
-        moveToNext();
-      }, 2500);
+      // For first lesson, wait for user to click Continue (Duolingo style)
+      if (lessonId !== 'boundaries-w1-1') {
+        setTimeout(() => {
+          setShowFeedback(false);
+          setIsCorrect(null);
+          setKatyaMood('thinking');
+          moveToNext();
+        }, 2500);
+      }
     } else {
       setKatyaMood('support');
       setKatyaMessage(
@@ -324,12 +383,22 @@ const EnhancedLessonInterface = ({
           'Спасибо, что делишься. Любой ответ — это шаг к тому, чтобы лучше понимать себя 💜'
       );
       setShowFeedback(true);
-      setTimeout(() => {
-        setShowFeedback(false);
-        setKatyaMood('thinking');
-        moveToNext();
-      }, 2000);
+      
+      if (lessonId !== 'boundaries-w1-1') {
+        setTimeout(() => {
+          setShowFeedback(false);
+          setKatyaMood('thinking');
+          moveToNext();
+        }, 2000);
+      }
     }
+  };
+
+  const handleContinue = () => {
+    setShowFeedback(false);
+    setIsCorrect(null);
+    setKatyaMood('thinking');
+    moveToNext();
   };
 
   const moveToNext = () => {
@@ -399,49 +468,65 @@ const EnhancedLessonInterface = ({
   };
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 text-slate-900 relative overflow-hidden">
-      {/* Светлые фоновые эффекты как на главной */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        {/* Основной фиолетовый свет */}
+  <div className="min-h-screen bg-slate-50/50 text-slate-900 relative overflow-hidden font-sans selection:bg-purple-200 selection:text-purple-900">
+      {/* Glassmorphism Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <motion.div
           animate={{
-            scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
-            x: [-60, 60, -60],
-            y: [-30, 30, -30]
+            scale: [1, 1.1, 1],
+            x: [0, 30, 0],
+            y: [0, -30, 0],
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-purple-300/40 rounded-full blur-[120px]"
+          className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-300/20 rounded-full blur-[100px]"
         />
-        {/* Розовый акцент */}
         <motion.div
           animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.25, 0.45, 0.25],
-            x: [80, -80, 80],
-            y: [40, -40, 40]
+            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.2, 1],
+            x: [0, -40, 0],
+            y: [0, 40, 0],
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-20 right-1/4 w-[600px] h-[600px] bg-pink-300/35 rounded-full blur-[140px]"
+          className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-300/20 rounded-full blur-[100px]"
         />
-        {/* Синий центральный */}
         <motion.div
           animate={{
-            scale: [1, 1.25, 1],
-            opacity: [0.2, 0.35, 0.2],
-            rotate: [0, 180, 360]
+            opacity: [0.2, 0.4, 0.2],
+            rotate: [0, 180, 360],
           }}
-          transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-300/30 rounded-full blur-[160px]"
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-pink-300/20 rounded-full blur-[120px]"
         />
       </div>
 
-      {/* Header - светлый премиум */}
+      {/* Header - Glassmorphism */}
+      {lessonId === 'boundaries-w1-1' ? (
+        <div className="sticky top-0 z-50 bg-white/70 backdrop-blur-[40px] pt-4 pb-2 px-4 border-b border-white/20 shadow-sm">
+          <div className="flex items-center justify-between gap-4 max-w-3xl mx-auto">
+             <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={onExit}
+              className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl"
+            >
+              <X className="w-6 h-6" />
+            </Button>
+            
+            <div className="flex-1">
+              <Stepper total={questions.length} current={currentQuestion} />
+            </div>
+
+            <div className="w-10" /> {/* Spacer for centering */}
+          </div>
+        </div>
+      ) : (
       <motion.div 
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 120, damping: 16 }}
-        className="sticky top-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-purple-200/50 shadow-lg shadow-purple-100/50"
+        className="sticky top-0 z-50 bg-white/70 backdrop-blur-[40px] border-b border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.05)]"
       >
         <div className="max-w-3xl mx-auto px-4 pt-3 pb-4">
           <div className="flex items-center justify-between mb-3">
@@ -449,11 +534,11 @@ const EnhancedLessonInterface = ({
               variant="ghost" 
               size="sm" 
               onClick={onExit}
-              className="text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all border border-transparent hover:border-red-300"
+              className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all"
             >
               ✕ Выход
             </Button>
-            <h2 className="text-xs font-bold text-purple-600 tracking-[0.15em] uppercase">
+            <h2 className="text-xs font-bold text-slate-400 tracking-[0.15em] uppercase">
               {lessonTitle}
             </h2>
             <div className="flex items-center gap-2">
@@ -461,14 +546,14 @@ const EnhancedLessonInterface = ({
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="hidden sm:flex items-center gap-1 text-[11px] font-black text-orange-600 bg-gradient-to-r from-amber-100 to-orange-100 px-3 py-1.5 rounded-full border-2 border-amber-400 shadow-lg shadow-amber-200"
+                  className="hidden sm:flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200"
                 >
                   🔥 COMBO x{combo}
                 </motion.div>
               )}
               <motion.div 
-                className="flex items-center gap-1.5 text-xs font-black text-purple-700 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 rounded-full border-2 border-purple-400 shadow-lg shadow-purple-200"
-                whileHover={{ scale: 1.08 }}
+                className="flex items-center gap-1.5 text-xs font-black text-purple-600 bg-purple-50 px-4 py-2 rounded-full border border-purple-100"
+                whileHover={{ scale: 1.02 }}
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 +{totalXpEarned} XP
@@ -479,30 +564,31 @@ const EnhancedLessonInterface = ({
             <div className="relative flex-1">
               <Progress 
                 value={progress} 
-                className="h-2.5 bg-purple-100 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:via-pink-500 [&>div]:to-blue-500 rounded-full border border-purple-200 overflow-visible" 
+                className="h-2 bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:via-pink-500 [&>div]:to-rose-500 rounded-full" 
               />
               {/* Светящаяся точка на конце прогресс-бара */}
               <motion.div
                 animate={{
-                  scale: [1, 1.4, 1],
+                  scale: [1, 1.2, 1],
                   opacity: [0.8, 1, 0.8]
                 }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                 style={{ left: `${progress}%` }}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-purple-500 shadow-lg shadow-purple-300"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-pink-500 shadow-md"
               />
             </div>
             <motion.span 
               key={Math.floor(progress / 10)}
               initial={{ scale: 1.3, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-[11px] text-purple-600 font-black min-w-[52px] text-right"
+              className="text-[11px] text-slate-400 font-bold min-w-[52px] text-right"
             >
               {Math.round(progress)}%
             </motion.span>
           </div>
         </div>
       </motion.div>
+      )}
 
       {/* Content */}
       <div className="relative max-w-3xl mx-auto px-3 pt-4 pb-8">
@@ -523,8 +609,8 @@ const EnhancedLessonInterface = ({
           )}
         </AnimatePresence>
         
-        {/* Daily Challenge Banner */}
-        {isFirstLesson && (
+        {/* Daily Challenge Banner - Disabled for cleaner UI */}
+        {isFirstLesson && false && (
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -554,8 +640,8 @@ const EnhancedLessonInterface = ({
           </motion.div>
         )}
         
-        {/* Mission Checklist для первого урока */}
-        {isFirstLesson && !showIntro && !showMissionComplete && (
+        {/* Mission Checklist для первого урока - Disabled for cleaner UI */}
+        {isFirstLesson && !showIntro && !showMissionComplete && false && (
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -577,14 +663,14 @@ const EnhancedLessonInterface = ({
                   transition={{ duration: 0.3 }}
                   className={`flex items-center gap-3 p-2 rounded-xl transition-all ${
                     item.completed 
-                      ? 'bg-gradient-to-r from-emerald-100 to-teal-100 border border-emerald-400' 
-                      : 'bg-slate-50 border border-slate-200'
+                      ? 'bg-[#5961F9]/20 border border-[#5961F9]' 
+                      : 'bg-white/5 border border-white/10'
                   }`}
                 >
-                  <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center border-2 ${
+                  <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center border ${
                     item.completed 
-                      ? 'bg-emerald-500 border-emerald-600' 
-                      : 'bg-white border-slate-300'
+                      ? 'bg-[#5961F9] border-[#5961F9]' 
+                      : 'bg-transparent border-white/30'
                   }`}>
                     {item.completed && (
                       <motion.div
@@ -597,7 +683,7 @@ const EnhancedLessonInterface = ({
                     )}
                   </div>
                   <span className={`text-xs font-semibold ${
-                    item.completed ? 'text-emerald-900' : 'text-slate-600'
+                    item.completed ? 'text-[#5961F9]' : 'text-white/60'
                   }`}>
                     {item.label}
                   </span>
@@ -618,11 +704,11 @@ const EnhancedLessonInterface = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowEmotionPicker(!showEmotionPicker)}
-            className="w-16 h-16 rounded-full bg-white/90 backdrop-blur-2xl border-2 border-purple-300 flex items-center justify-center text-3xl shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 transition-shadow"
+            className="w-16 h-16 rounded-full bg-[#070811]/90 backdrop-blur-2xl border border-[#EE9AE5] flex items-center justify-center text-3xl shadow-lg shadow-[#EE9AE5]/20 hover:shadow-[#EE9AE5]/40 transition-shadow"
           >
             {currentEmotion}
           </motion.button>
-          <span className="text-[10px] text-purple-600 mt-1 block text-center font-semibold">Как ты?</span>
+          <span className="text-[10px] text-[#EE9AE5] mt-1 block text-center font-semibold">Как ты?</span>
           
           {/* Emotion Picker */}
           <AnimatePresence>
@@ -631,9 +717,9 @@ const EnhancedLessonInterface = ({
                 initial={{ scale: 0, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0, opacity: 0, y: 20 }}
-                className="absolute bottom-20 right-0 bg-white/95 backdrop-blur-xl rounded-2xl p-3 border-2 border-purple-300 shadow-2xl shadow-purple-300"
+                className="absolute bottom-20 right-0 bg-[#070811]/95 backdrop-blur-xl rounded-2xl p-3 border border-[#EE9AE5] shadow-2xl shadow-[#EE9AE5]/20"
               >
-                <p className="text-xs text-purple-600 mb-2 text-center font-bold">Выбери эмоцию</p>
+                <p className="text-xs text-[#EE9AE5] mb-2 text-center font-bold">Выбери эмоцию</p>
                 <div className="grid grid-cols-3 gap-2">
                   {['😊', '😐', '😔', '😡', '🤔', '😴', '🤗', '😱', '🥳'].map((emotion) => (
                     <motion.button
@@ -647,8 +733,8 @@ const EnhancedLessonInterface = ({
                       }}
                       className={`w-10 h-10 rounded-xl flex items-center justify-center text-2xl ${
                         currentEmotion === emotion 
-                          ? 'bg-purple-100 border-2 border-purple-500' 
-                          : 'bg-purple-50 border border-purple-200 hover:bg-purple-100'
+                          ? 'bg-[#EE9AE5]/20 border border-[#EE9AE5]' 
+                          : 'bg-white/5 border border-white/10 hover:bg-white/10'
                       }`}
                     >
                       {emotion}
@@ -669,7 +755,7 @@ const EnhancedLessonInterface = ({
               transition={{ type: "spring", stiffness: 100, damping: 20, duration: 0.6 }}
               className="relative flex flex-col items-center justify-center min-h-[75vh] text-center px-4"
             >
-              {/* Светлые фоновые градиенты */}
+              {/* Темные неоновые градиенты */}
               <motion.div
                 animate={{
                   scale: [1, 1.2, 1],
@@ -677,7 +763,7 @@ const EnhancedLessonInterface = ({
                   opacity: [0.4, 0.6, 0.4]
                 }}
                 transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-20 -left-20 w-80 h-80 bg-gradient-to-br from-purple-300/60 via-pink-300/50 to-purple-300/40 blur-3xl rounded-full"
+                className="absolute -top-20 -left-20 w-80 h-80 bg-gradient-to-br from-[#5961F9]/40 via-[#EE9AE5]/30 to-[#5961F9]/20 blur-3xl rounded-full"
               />
               <motion.div
                 animate={{
@@ -686,7 +772,7 @@ const EnhancedLessonInterface = ({
                   opacity: [0.3, 0.5, 0.3]
                 }}
                 transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-blue-300/50 via-purple-300/40 to-pink-300/30 blur-3xl rounded-full"
+                className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-[#40C9FF]/30 via-[#5961F9]/40 to-[#EE9AE5]/20 blur-3xl rounded-full"
               />
 
               <motion.div
@@ -704,11 +790,11 @@ const EnhancedLessonInterface = ({
                     rotate: [-2, 2, -2]
                   }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-64 h-64 md:w-72 md:h-72 drop-shadow-2xl"
+                  className="w-64 h-64 md:w-72 md:h-72 drop-shadow-[0_0_30px_rgba(89,97,249,0.4)]"
                 >
                   <RiveKatya
                     mood={intro.slides?.[introSlideIndex]?.katya || 'celebrate'}
-                    message={intro.slides?.[introSlideIndex]?.text || 'Готов(а) к первой миссии о границах?'}
+                    message={intro.slides?.[introSlideIndex]?.text || 'Готов(а) к первой миссии о границах'}
                     showBubble={true}
                   />
                 </motion.div>
@@ -719,7 +805,7 @@ const EnhancedLessonInterface = ({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent leading-tight"
+                    className="text-4xl md:text-5xl font-black bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] bg-clip-text text-transparent leading-tight drop-shadow-lg"
                   >
                     {intro.slides?.[introSlideIndex]?.text?.replace('Я Катя', `Я Катя, ${userName}`) || `Привет, ${userName}! Я Катя! 💜`}
                   </motion.h2>
@@ -729,7 +815,7 @@ const EnhancedLessonInterface = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="text-lg md:text-xl text-slate-700 font-medium leading-relaxed"
+                      className="text-lg md:text-xl text-white/90 font-medium leading-relaxed drop-shadow-md"
                     >
                       {intro.slides[introSlideIndex].subtext}
                     </motion.p>
@@ -747,7 +833,7 @@ const EnhancedLessonInterface = ({
                       speakMessage(textToSpeak);
                       triggerHaptic('light');
                     }}
-                    className="px-4 py-2 rounded-full bg-white/90 hover:bg-white backdrop-blur-xl border-2 border-purple-300 text-sm text-purple-700 hover:text-purple-900 transition-all flex items-center gap-2 mx-auto shadow-md shadow-purple-200"
+                    className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-sm text-white hover:text-[#EE9AE5] transition-all flex items-center gap-2 mx-auto shadow-lg shadow-[#5961F9]/20"
                   >
                     🔊 Озвучить
                   </motion.button>
@@ -761,8 +847,8 @@ const EnhancedLessonInterface = ({
                       animate={{
                         width: idx === introSlideIndex ? 40 : 8,
                         backgroundColor: idx === introSlideIndex 
-                          ? 'rgb(147, 51, 234)' 
-                          : 'rgb(203, 213, 225)'
+                          ? '#EE9AE5' 
+                          : 'rgba(255, 255, 255, 0.2)'
                       }}
                       className="h-2 rounded-full"
                     />
@@ -778,7 +864,7 @@ const EnhancedLessonInterface = ({
                   whileTap={{ scale: 0.95 }}
                 >
                   <Button
-                    className="px-8 py-4 text-base font-bold bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 text-white rounded-full shadow-xl shadow-purple-300 border-2 border-purple-300"
+                    className="px-8 py-4 text-base font-bold bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] hover:brightness-110 text-white rounded-full shadow-xl shadow-[#EE9AE5]/30 border-0"
                     onClick={() => {
                       triggerHaptic('medium');
                       if (introSlideIndex < (intro.slides?.length || 1) - 1) {
@@ -802,11 +888,11 @@ const EnhancedLessonInterface = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: -30 }}
               transition={{ type: "spring", stiffness: 140, damping: 20 }}
-              className="relative overflow-hidden rounded-3xl bg-white/95 backdrop-blur-xl border-2 border-purple-300 p-6 shadow-2xl shadow-purple-300"
+              className="relative overflow-hidden rounded-3xl bg-[#070811]/90 backdrop-blur-xl border border-white/10 p-6 shadow-2xl shadow-[#5961F9]/20"
             >
               <div className="absolute inset-0 opacity-40">
-                <div className="absolute -top-10 -right-10 w-64 h-64 bg-pink-300/50 blur-3xl" />
-                <div className="absolute -bottom-16 -left-12 w-72 h-72 bg-purple-300/50 blur-3xl" />
+                <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#EE9AE5]/20 blur-3xl" />
+                <div className="absolute -bottom-16 -left-12 w-72 h-72 bg-[#5961F9]/20 blur-3xl" />
               </div>
               <div className="relative z-10 flex flex-col items-center text-center space-y-5">
                 <motion.div
@@ -821,12 +907,12 @@ const EnhancedLessonInterface = ({
                   />
                 </motion.div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-purple-600 mb-2 font-bold">МИССИЯ ВЫПОЛНЕНА</p>
-                  <h3 className="text-3xl font-extrabold text-purple-900">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#EE9AE5] mb-2 font-bold">МИССИЯ ВЫПОЛНЕНА</p>
+                  <h3 className="text-3xl font-extrabold text-white drop-shadow-lg">
                     {completionMeta.message || 'Ты легенда!'}
                   </h3>
                   {completionMeta.subMessage && (
-                    <p className="text-sm text-slate-700 mt-2">{completionMeta.subMessage}</p>
+                    <p className="text-sm text-white/80 mt-2">{completionMeta.subMessage}</p>
                   )}
                 </div>
                 {earnedStats.length > 0 && (
@@ -834,40 +920,40 @@ const EnhancedLessonInterface = ({
                     {earnedStats.map((stat: string) => (
                       <div
                         key={stat}
-                        className="rounded-2xl bg-purple-100 border-2 border-purple-300 py-3 px-2"
+                        className="rounded-2xl bg-white/5 border border-white/10 py-3 px-2"
                       >
-                        <p className="text-[11px] uppercase tracking-wide text-purple-600 font-bold">{stat}</p>
-                        <p className="text-lg font-bold text-purple-900">+1</p>
+                        <p className="text-[11px] uppercase tracking-wide text-[#EE9AE5] font-bold">{stat}</p>
+                        <p className="text-lg font-bold text-white">+1</p>
                       </div>
                     ))}
                   </div>
                 )}
                 {completionMeta.minigame && (
-                  <div className="w-full rounded-2xl bg-purple-100 border-2 border-purple-300 p-4 text-left">
-                    <p className="text-xs text-purple-600 uppercase tracking-[0.4em] mb-1 font-bold">MINI-GAME BONUS</p>
-                    <p className="text-purple-900 font-semibold text-lg">{completionMeta.minigame.title}</p>
-                    <p className="text-slate-700 text-sm mb-3">{completionMeta.minigame.description}</p>
-                    <div className="flex items-center justify-between text-purple-700 text-sm">
+                  <div className="w-full rounded-2xl bg-white/5 border border-white/10 p-4 text-left">
+                    <p className="text-xs text-[#EE9AE5] uppercase tracking-[0.4em] mb-1 font-bold">MINI-GAME BONUS</p>
+                    <p className="text-white font-semibold text-lg">{completionMeta.minigame.title}</p>
+                    <p className="text-white/70 text-sm mb-3">{completionMeta.minigame.description}</p>
+                    <div className="flex items-center justify-between text-[#5961F9] text-sm">
                       <span>Бонус XP</span>
                       <span className="font-bold">+{bonusXP}</span>
                     </div>
                   </div>
                 )}
                 {completionMeta.stats?.nextUnlock && (
-                  <p className="text-xs text-slate-600">{completionMeta.stats.nextUnlock}</p>
+                  <p className="text-xs text-white/50">{completionMeta.stats.nextUnlock}</p>
                 )}
                 <div className="flex flex-col sm:flex-row gap-3 w-full">
                   {shareEnabled && (
                     <Button
                       variant="secondary"
-                      className="flex-1 bg-purple-100 hover:bg-purple-200 border-2 border-purple-300 text-purple-700"
+                      className="flex-1 bg-white/10 hover:bg-white/20 border border-white/10 text-white"
                       onClick={handleShareMission}
                     >
                       Поделиться
                     </Button>
                   )}
                   <Button
-                    className="flex-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 text-white font-semibold shadow-xl shadow-purple-300"
+                    className="flex-1 bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] text-white font-semibold shadow-xl shadow-[#EE9AE5]/30 border-0"
                     onClick={handleClaimRewards}
                   >
                     Забрать {totalXpEarned} XP
@@ -933,7 +1019,7 @@ const EnhancedLessonInterface = ({
                   speakMessage(katyaMessage);
                   triggerHaptic('light');
                 }}
-                className="absolute top-2 right-2 w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-xl border-2 border-purple-300 flex items-center justify-center text-lg transition-all shadow-md shadow-purple-200 z-10"
+                className="absolute top-2 right-2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 flex items-center justify-center text-lg transition-all shadow-lg shadow-[#5961F9]/20 z-10"
               >
                 🔊
               </motion.button>
@@ -956,13 +1042,13 @@ const EnhancedLessonInterface = ({
                 transition={{ delay: 0.1 }}
                 className="mb-3 text-center"
               >
-                <p className="text-sm font-bold text-purple-600 mb-2">
+                <p className="text-sm font-bold text-[#EE9AE5] mb-2">
                   Вопрос {currentQuestion + 1} из {questions.length}
                 </p>
                 <div className="max-w-xs mx-auto">
                   <Progress 
                     value={((currentQuestion + 1) / questions.length) * 100} 
-                    className="h-1.5 bg-purple-100 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 rounded-full"
+                    className="h-1.5 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-[#5961F9] [&>div]:to-[#EE9AE5] rounded-full"
                   />
                 </div>
               </motion.div>
@@ -973,7 +1059,7 @@ const EnhancedLessonInterface = ({
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="relative overflow-hidden rounded-3xl bg-white/90 backdrop-blur-xl border-2 border-purple-300 shadow-2xl shadow-purple-200 px-6 pt-6 pb-7 mb-4"
+              className="relative overflow-hidden rounded-3xl bg-white/60 backdrop-blur-[20px] border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)] px-6 pt-6 pb-7 mb-4"
             >
               {/* Светлые анимированные градиенты */}
               <div className="pointer-events-none absolute inset-0 opacity-30">
@@ -985,7 +1071,7 @@ const EnhancedLessonInterface = ({
                     rotate: [0, 90, 180, 270, 360]
                   }}
                   transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -top-32 -right-36 w-80 h-80 bg-gradient-to-br from-pink-300/60 via-purple-300/50 to-blue-300/40 blur-3xl rounded-full"
+                  className="absolute -top-32 -right-36 w-80 h-80 bg-gradient-to-br from-purple-200/40 via-pink-200/30 to-rose-200/20 blur-3xl rounded-full"
                 />
                 <motion.div
                   animate={{
@@ -995,7 +1081,7 @@ const EnhancedLessonInterface = ({
                     rotate: [360, 270, 180, 90, 0]
                   }}
                   transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                  className="absolute -bottom-36 -left-28 w-72 h-72 bg-gradient-to-tr from-blue-300/50 via-purple-300/60 to-pink-300/40 blur-3xl rounded-full"
+                  className="absolute -bottom-36 -left-28 w-72 h-72 bg-gradient-to-tr from-blue-200/30 via-purple-200/40 to-pink-200/20 blur-3xl rounded-full"
                 />
               </div>
 
@@ -1004,7 +1090,7 @@ const EnhancedLessonInterface = ({
               <motion.h3
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex-1 text-2xl md:text-3xl font-black bg-gradient-to-r from-purple-700 via-pink-700 to-blue-700 bg-clip-text text-transparent text-center leading-relaxed"
+                className="flex-1 text-2xl md:text-3xl font-black text-slate-900 text-center leading-relaxed drop-shadow-sm"
               >
                 {question.question}
               </motion.h3>
@@ -1017,11 +1103,11 @@ const EnhancedLessonInterface = ({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={useHint}
-                  className="relative shrink-0 bg-gradient-to-r from-blue-400 to-cyan-500 p-3 rounded-2xl shadow-lg"
+                  className="relative shrink-0 bg-white/50 hover:bg-white/80 p-3 rounded-2xl shadow-sm border border-white/40"
                   title={`Использовать подсказку (${hintsAvailable})`}
                 >
                   <span className="text-2xl">💡</span>
-                  <div className="absolute -top-1 -right-1 bg-white text-blue-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  <div className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
                     {hintsAvailable}
                   </div>
                 </motion.button>
@@ -1033,13 +1119,13 @@ const EnhancedLessonInterface = ({
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-2xl"
+                  className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl"
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">💡</span>
                     <div>
-                      <h4 className="font-bold text-blue-900 mb-1">Подсказка:</h4>
-                      <p className="text-blue-800">{question.explanation || 'Подумай о своих чувствах и границах'}</p>
+                      <h4 className="font-bold text-blue-600 mb-1">Подсказка:</h4>
+                      <p className="text-slate-700">{question.explanation || 'Подумай о своих чувствах и границах'}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -1102,14 +1188,14 @@ const EnhancedLessonInterface = ({
                         handleAnswer(option);
                       }}
                       disabled={showFeedback}
-                      className="group relative w-full px-6 py-6 rounded-2xl bg-white/80 hover:bg-white/90 backdrop-blur-[20px] border-2 border-purple-300 hover:border-purple-500 transition-all text-left font-bold text-[16px] disabled:opacity-50 shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 overflow-hidden text-slate-800"
+                      className="group relative w-full px-6 py-6 rounded-2xl bg-white/50 hover:bg-white/80 backdrop-blur-md border border-white/40 hover:border-purple-300 transition-all text-left font-bold text-[16px] disabled:opacity-50 shadow-sm hover:shadow-md overflow-hidden text-slate-800"
                     >
                       {/* Градиентный hover-эффект */}
                       <motion.div
                         initial={{ opacity: 0 }}
                         whileHover={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
-                        className="absolute inset-0 bg-gradient-to-r from-purple-100/50 via-pink-100/50 to-blue-100/50"
+                        className="absolute inset-0 bg-gradient-to-r from-purple-100/50 via-pink-100/50 to-rose-100/50"
                       />
                       
                       {/* Анимированная рамка при hover */}
@@ -1120,18 +1206,18 @@ const EnhancedLessonInterface = ({
                           scale: [0.8, 1.2, 1.4]
                         }}
                         transition={{ duration: 1.5, repeat: Infinity }}
-                        className="absolute inset-0 border-2 border-purple-400/40 rounded-2xl"
+                        className="absolute inset-0 border border-purple-200 rounded-2xl"
                       />
                       
                       <div className="relative flex items-center gap-4">
                         <motion.span
                           whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
                           transition={{ duration: 0.5 }}
-                          className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 text-[15px] font-black text-white shadow-[0_0_30px_rgba(168,85,247,0.7),0_0_60px_rgba(168,85,247,0.3)] group-hover:shadow-[0_0_50px_rgba(168,85,247,1),0_0_100px_rgba(168,85,247,0.5)] transition-shadow"
+                          className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-[15px] font-black text-white shadow-md"
                         >
                           {String.fromCharCode(65 + index)}
                         </motion.span>
-                        <span className="text-slate-100 group-hover:text-white transition-colors">{option}</span>
+                        <span className="text-slate-700 font-medium group-hover:text-slate-900 transition-colors">{option}</span>
                       </div>
                     </motion.button>
                   ))}
@@ -1151,24 +1237,24 @@ const EnhancedLessonInterface = ({
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleMultipleToggle(option)}
                       disabled={showFeedback}
-                      className={`w-full px-4 py-4 rounded-2xl border transition-all text-left font-semibold text-[15px] disabled:opacity-50 shadow-[0_10px_30px_rgba(15,23,42,0.9)] flex items-center gap-3 ${
+                      className={`w-full px-4 py-4 rounded-2xl border transition-all text-left font-semibold text-[15px] disabled:opacity-50 shadow-sm flex items-center gap-3 ${
                         selectedMultiple.includes(option)
-                          ? 'bg-indigo-500/90 text-white border-indigo-300 scale-[1.02]'
-                          : 'bg-slate-900/70 border-white/8 hover:border-indigo-400/60'
+                          ? 'bg-purple-500 text-white border-purple-600 scale-[1.02] shadow-lg shadow-purple-200'
+                          : 'bg-white/50 border-white/40 hover:border-purple-200 text-slate-700 hover:bg-white/80'
                       }`}
                     >
-                      <div className={`flex items-center justify-center w-6 h-6 rounded-md border-2 ${selectedMultiple.includes(option) ? 'bg-indigo-400 border-indigo-200' : 'border-slate-500'}`}>
+                      <div className={`flex items-center justify-center w-6 h-6 rounded-md border ${selectedMultiple.includes(option) ? 'bg-white border-white' : 'border-slate-300 bg-white/50'}`}>
                         {selectedMultiple.includes(option) && (
-                          <span className="text-[10px] font-bold text-slate-950">✓</span>
+                          <span className="text-[12px] font-bold text-purple-600">✓</span>
                         )}
                       </div>
-                      <span className="text-slate-100">{option}</span>
+                      <span className={selectedMultiple.includes(option) ? "text-white" : "text-slate-700"}>{option}</span>
                     </motion.button>
                   ))}
                   <Button 
                     onClick={() => handleAnswer(selectedMultiple)} 
                     disabled={showFeedback} 
-                    className="w-full mt-4 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-emerald-400 border-0 shadow-[0_14px_45px_rgba(129,140,248,0.9)] text-slate-950 font-semibold hover:brightness-110"
+                    className="w-full mt-4 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 border-0 shadow-lg shadow-purple-200 text-white font-bold hover:brightness-110 py-6 text-lg rounded-2xl"
                   >
                     Подтвердить
                   </Button>
@@ -1186,7 +1272,7 @@ const EnhancedLessonInterface = ({
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       placeholder="Твой ответ здесь..."
-                      className="text-[15px] px-4 py-5 border-2 border-purple-500/20 focus:border-purple-400/60 focus:ring-0 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.9),0_0_40px_rgba(168,85,247,0.1)] bg-black/70 placeholder:text-slate-500 text-white"
+                      className="text-[16px] px-4 py-6 border border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 rounded-2xl shadow-inner bg-white/80 placeholder:text-slate-400 text-slate-900"
                       disabled={showFeedback}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && inputValue.trim()) {
@@ -1202,7 +1288,7 @@ const EnhancedLessonInterface = ({
                       handleAnswer(inputValue);
                     }}
                     disabled={!inputValue.trim() || showFeedback}
-                    className="w-full py-4 text-[15px] bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 hover:from-purple-400 hover:via-fuchsia-400 hover:to-pink-400 border-0 shadow-[0_14px_45px_rgba(168,85,247,0.7)] text-white font-bold hover:shadow-[0_20px_60px_rgba(168,85,247,0.9)]"
+                    className="w-full py-4 text-[16px] bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 hover:brightness-110 border-0 shadow-lg shadow-purple-200 text-white font-bold"
                     size="lg"
                   >
                     Продолжить <ArrowRight className="ml-2" />
@@ -1220,11 +1306,11 @@ const EnhancedLessonInterface = ({
                     min={1}
                     step={1}
                     disabled={showFeedback}
-                    className="my-6 [&>[role=slider]]:bg-indigo-400"
+                    className="my-8 [&>[role=slider]]:bg-white [&>[role=slider]]:border-4 [&>[role=slider]]:border-purple-500 [&>[role=slider]]:shadow-md [&>[role=track]]:bg-slate-200 [&>[role=range]]:bg-gradient-to-r [&>[role=range]]:from-purple-500 [&>[role=range]]:to-pink-500"
                   />
                   <motion.div 
-                    className="text-center text-5xl font-bold text-indigo-300 drop-shadow-[0_0_25px_rgba(129,140,248,0.9)]"
-                    animate={{ scale: [1, 1.2, 1] }}
+                    className="text-center text-6xl font-black text-slate-800 drop-shadow-sm"
+                    animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 0.3 }}
                     key={sliderValue[0]}
                   >
@@ -1233,7 +1319,7 @@ const EnhancedLessonInterface = ({
                   <Button 
                     onClick={() => handleAnswer(sliderValue[0])} 
                     disabled={showFeedback} 
-                    className="mt-5 bg-slate-900/90 border border-indigo-400/60 text-indigo-200 hover:bg-indigo-500/20"
+                    className="mt-8 w-full py-4 text-lg font-bold bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white shadow-lg shadow-purple-200 rounded-2xl"
                   >
                     Ответить
                   </Button>
@@ -1242,7 +1328,7 @@ const EnhancedLessonInterface = ({
 
               {/* Matching Questions */}
               {question.type === 'matching' && (
-                <p className="text-center text-sm text-rose-300/80">
+                <p className="text-center text-sm text-[#EE9AE5]/80">
                   Этот тип вопроса пока в разработке — скоро здесь будет интерактив 🛠️
                 </p>
               )}
@@ -1250,21 +1336,30 @@ const EnhancedLessonInterface = ({
               </div>
             </motion.div>
 
-            {/* Enhanced Empathetic Feedback Overlay (GameLesson-style) */}
+            {/* Enhanced Empathetic Feedback Overlay (Glassmorphism) */}
             <AnimatePresence>
               {showFeedback && (
                 <motion.div
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.9, opacity: 0, y: -20 }}
+                  initial={lessonId === 'boundaries-w1-1' ? { y: '100%' } : { scale: 0.9, opacity: 0, y: 20 }}
+                  animate={lessonId === 'boundaries-w1-1' ? { y: 0 } : { scale: 1, opacity: 1, y: 0 }}
+                  exit={lessonId === 'boundaries-w1-1' ? { y: '100%' } : { scale: 0.9, opacity: 0, y: -20 }}
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className={`relative overflow-hidden rounded-3xl shadow-2xl border-2 p-6 ${
-                    isCorrect === true 
-                      ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-400' 
-                      : isCorrect === false
-                      ? 'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-400'
-                      : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-400'
-                  }`}
+                  className={lessonId === 'boundaries-w1-1' 
+                    ? `fixed bottom-0 left-0 right-0 z-[100] p-6 pb-12 rounded-t-3xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] backdrop-blur-xl ${
+                        isCorrect === true 
+                          ? 'bg-white/95 border-green-200' 
+                          : isCorrect === false
+                          ? 'bg-white/95 border-rose-200'
+                          : 'bg-white/95 border-purple-200'
+                      }`
+                    : `relative overflow-hidden rounded-3xl shadow-lg border p-6 backdrop-blur-xl ${
+                        isCorrect === true 
+                          ? 'bg-green-50/90 border-green-200' 
+                          : isCorrect === false
+                          ? 'bg-rose-50/90 border-rose-200'
+                          : 'bg-purple-50/90 border-purple-200'
+                      }`
+                  }
                 >
                   {/* Subtle animated background glow */}
                   <motion.div
@@ -1275,10 +1370,10 @@ const EnhancedLessonInterface = ({
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                     className={`absolute inset-0 blur-3xl ${
                       isCorrect === true 
-                        ? 'bg-emerald-300/40' 
+                        ? 'bg-green-200/30' 
                         : isCorrect === false
-                        ? 'bg-rose-300/40'
-                        : 'bg-blue-300/40'
+                        ? 'bg-rose-200/30'
+                        : 'bg-purple-200/30'
                     }`}
                   />
                   
@@ -1291,11 +1386,11 @@ const EnhancedLessonInterface = ({
                         transition={{ type: "spring", stiffness: 300, damping: 15 }}
                       >
                         {isCorrect ? (
-                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-300">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-200">
                             <CheckCircle2 className="w-8 h-8 text-white" />
                           </div>
                         ) : (
-                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-lg shadow-rose-300">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-lg shadow-rose-200">
                             <XCircle className="w-8 h-8 text-white" />
                           </div>
                         )}
@@ -1310,10 +1405,10 @@ const EnhancedLessonInterface = ({
                         transition={{ delay: 0.1 }}
                         className={`text-lg font-black mb-2 ${
                           isCorrect === true 
-                            ? 'text-emerald-900' 
+                            ? 'text-green-600' 
                             : isCorrect === false
-                            ? 'text-rose-900'
-                            : 'text-blue-900'
+                            ? 'text-rose-600'
+                            : 'text-purple-600'
                         }`}
                       >
                         {isCorrect === true && '✨ Точно в цель!'}
@@ -1327,13 +1422,7 @@ const EnhancedLessonInterface = ({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.2 }}
-                          className={`text-base font-semibold mb-2 leading-relaxed ${
-                            isCorrect === true 
-                              ? 'text-emerald-800' 
-                              : isCorrect === false
-                              ? 'text-rose-800'
-                              : 'text-blue-800'
-                          }`}
+                          className="text-base font-semibold mb-2 leading-relaxed text-slate-800"
                         >
                           {question.katyaResponse}
                         </motion.p>
@@ -1345,7 +1434,7 @@ const EnhancedLessonInterface = ({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.3 }}
-                          className="text-sm text-slate-700 leading-relaxed"
+                          className="text-sm text-slate-600 leading-relaxed"
                         >
                           {question.explanation}
                         </motion.p>
@@ -1357,7 +1446,7 @@ const EnhancedLessonInterface = ({
                           initial={{ scale: 0, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ delay: 0.4, type: "spring" }}
-                          className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-black shadow-lg shadow-amber-300"
+                          className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-black shadow-md"
                         >
                           <Star className="w-3.5 h-3.5" />
                           +{Math.floor(xpReward / questions.length)} XP
@@ -1365,6 +1454,25 @@ const EnhancedLessonInterface = ({
                       )}
                     </div>
                   </div>
+
+                  {/* Continue Button for First Lesson */}
+                  {lessonId === 'boundaries-w1-1' && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      onClick={handleContinue}
+                      className={`w-full mt-6 py-4 rounded-2xl font-black text-lg shadow-lg transition-transform active:scale-95 ${
+                        isCorrect === true 
+                          ? 'bg-green-500 text-white shadow-green-200 hover:bg-green-600' 
+                          : isCorrect === false
+                          ? 'bg-rose-500 text-white shadow-rose-200 hover:bg-rose-600'
+                          : 'bg-purple-500 text-white shadow-purple-200 hover:bg-purple-600'
+                      }`}
+                    >
+                      ПРОДОЛЖИТЬ
+                    </motion.button>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

@@ -1,214 +1,193 @@
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { X, Trophy, Clock, Star } from 'lucide-react';
-import { Button } from './ui/button';
+import { RefreshCw, Trophy, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { Button } from '@/components/ui/button';
+import { useQuestProgress } from './DailyQuests';
+import { useCurrency } from './CurrencyDisplay';
 
 interface Card {
   id: number;
   emoji: string;
-  flipped: boolean;
-  matched: boolean;
+  isFlipped: boolean;
+  isMatched: boolean;
 }
 
-const EMOTIONS = ['😊', '😢', '😡', '😨', '🤗', '😴', '🤔', '😍'];
+const EMOTIONS = ['😄', '😢', '😠', '😨', '😲', '😍', '😎', '🤔'];
 
-interface EmotionMatchGameProps {
-  onClose: () => void;
-  onComplete: (score: number) => void;
-}
-
-export const EmotionMatchGame = ({ onClose, onComplete }: EmotionMatchGameProps) => {
+export const EmotionMatchGame: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [cards, setCards] = useState<Card[]>([]);
-  const [flipped, setFlipped] = useState<number[]>([]);
-  const [matched, setMatched] = useState<number[]>([]);
+  const [flippedCards, setFlippedCards] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [gameOver, setGameOver] = useState(false);
-  const [score, setScore] = useState(0);
+  const [isWon, setIsWon] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  
+  const { updateMiniGameQuest } = useQuestProgress();
+  const { addCoins } = useCurrency();
 
   useEffect(() => {
-    // Инициализация карточек
-    const emotions = EMOTIONS.slice(0, 6);
-    const pairs = [...emotions, ...emotions];
-    const shuffled = pairs.sort(() => Math.random() - 0.5).map((emoji, index) => ({
-      id: index,
-      emoji,
-      flipped: false,
-      matched: false,
-    }));
-    setCards(shuffled);
+    initializeGame();
   }, []);
 
-  useEffect(() => {
-    // Таймер
-    if (timeLeft > 0 && !gameOver) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      setGameOver(true);
-      onComplete(score);
-    }
-  }, [timeLeft, gameOver, score, onComplete]);
+  const initializeGame = () => {
+    const shuffledEmotions = [...EMOTIONS, ...EMOTIONS]
+      .sort(() => Math.random() - 0.5)
+      .map((emoji, index) => ({
+        id: index,
+        emoji,
+        isFlipped: false,
+        isMatched: false,
+      }));
+    
+    setCards(shuffledEmotions);
+    setFlippedCards([]);
+    setMoves(0);
+    setIsWon(false);
+    setIsLocked(false);
+  };
 
-  useEffect(() => {
-    // Проверка совпадения
-    if (flipped.length === 2) {
-      const [first, second] = flipped;
-      if (cards[first].emoji === cards[second].emoji) {
-        setMatched([...matched, first, second]);
-        const points = 100 + (timeLeft * 2); // Бонус за скорость
-        setScore(score + points);
-        confetti({
-          particleCount: 20,
-          spread: 40,
-          origin: { y: 0.6 },
-        });
-        setFlipped([]);
-        
-        // Проверка победы
-        if (matched.length + 2 === cards.length) {
-          setGameOver(true);
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-          onComplete(score + points);
-        }
-      } else {
-        setTimeout(() => setFlipped([]), 1000);
-      }
-      setMoves(moves + 1);
-    }
-  }, [flipped, cards, matched, score, timeLeft, moves, onComplete]);
+  const handleCardClick = (id: number) => {
+    if (isLocked || cards[id].isFlipped || cards[id].isMatched) return;
 
-  const handleCardClick = (index: number) => {
-    if (flipped.length === 2 || flipped.includes(index) || matched.includes(index)) {
-      return;
+    const newCards = [...cards];
+    newCards[id].isFlipped = true;
+    setCards(newCards);
+
+    const newFlipped = [...flippedCards, id];
+    setFlippedCards(newFlipped);
+
+    if (newFlipped.length === 2) {
+      setIsLocked(true);
+      setMoves(prev => prev + 1);
+      checkForMatch(newFlipped);
     }
-    setFlipped([...flipped, index]);
+  };
+
+  const checkForMatch = (currentFlipped: number[]) => {
+    const [first, second] = currentFlipped;
+    
+    if (cards[first].emoji === cards[second].emoji) {
+      // Match found
+      setTimeout(() => {
+        setCards(prev => prev.map(card => 
+          currentFlipped.includes(card.id) 
+            ? { ...card, isMatched: true } 
+            : card
+        ));
+        setFlippedCards([]);
+        setIsLocked(false);
+      }, 500);
+    } else {
+      // No match
+      setTimeout(() => {
+        setCards(prev => prev.map(card => 
+          currentFlipped.includes(card.id) 
+            ? { ...card, isFlipped: false } 
+            : card
+        ));
+        setFlippedCards([]);
+        setIsLocked(false);
+      }, 1000);
+    }
+  };
+
+  // Check for win condition
+  useEffect(() => {
+    if (cards.length > 0 && cards.every(c => c.isMatched)) {
+      handleWin();
+    }
+  }, [cards]);
+
+  const handleWin = () => {
+    if (isWon) return; // Prevent double execution
+    setIsWon(true);
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+    
+    // Rewards
+    addCoins(20); // 20 coins for winning
+    updateMiniGameQuest(); // Complete daily quest
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-gradient-to-br from-purple-900 via-pink-900 to-blue-900 z-50 overflow-auto"
-    >
-      <div className="min-h-screen p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden"
+      >
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <button onClick={onClose} className="text-white">
-            <X className="w-6 h-6" />
-          </button>
-          
-          <div className="flex gap-4 text-white">
-            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-              <Trophy className="w-4 h-4" />
-              <span className="font-bold">{score}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-              <Clock className="w-4 h-4" />
-              <span className="font-bold">{timeLeft}s</span>
-            </div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">Найди пару</h2>
+            <p className="text-slate-500 text-sm">Ходов: {moves}</p>
           </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-slate-100">
+            <X className="w-6 h-6 text-slate-500" />
+          </Button>
         </div>
 
-        {/* Заголовок */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">🎮 Найди пары эмоций</h2>
-          <p className="text-white/80 text-sm">Ходов: {moves}</p>
-        </div>
-
-        {/* Игровое поле */}
-        <div className="grid grid-cols-4 gap-3 max-w-md mx-auto mb-6">
-          {cards.map((card, index) => (
+        {/* Game Grid */}
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          {cards.map(card => (
             <motion.button
               key={card.id}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => handleCardClick(index)}
-              disabled={matched.includes(index)}
-              className={`aspect-square rounded-2xl flex items-center justify-center text-4xl transition-all ${
-                matched.includes(index)
-                  ? 'bg-green-500/30 backdrop-blur-sm border-2 border-green-400'
-                  : flipped.includes(index)
-                  ? 'bg-white/90 backdrop-blur-sm'
-                  : 'bg-white/20 backdrop-blur-sm border-2 border-white/40'
+              onClick={() => handleCardClick(card.id)}
+              className={`aspect-square rounded-xl text-3xl flex items-center justify-center transition-all duration-300 ${
+                card.isFlipped || card.isMatched
+                  ? 'bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200 rotate-0'
+                  : 'bg-gradient-to-br from-purple-500 to-indigo-600 rotate-y-180 shadow-md'
               }`}
+              disabled={card.isMatched}
             >
-              <AnimatePresence mode="wait">
-                {(flipped.includes(index) || matched.includes(index)) ? (
-                  <motion.span
-                    key="emoji"
-                    initial={{ rotateY: 90 }}
-                    animate={{ rotateY: 0 }}
-                    exit={{ rotateY: 90 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {card.emoji}
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="question"
-                    initial={{ rotateY: 90 }}
-                    animate={{ rotateY: 0 }}
-                    className="text-white text-2xl"
-                  >
-                    ?
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              {(card.isFlipped || card.isMatched) ? card.emoji : '❓'}
             </motion.button>
           ))}
         </div>
 
-        {/* Game Over */}
+        {/* Win State Overlay */}
         <AnimatePresence>
-          {gameOver && (
+          {isWon && (
             <motion.div
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10"
+              className="absolute inset-0 bg-white/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10"
             >
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="bg-white rounded-3xl p-8 max-w-sm mx-4 text-center"
-              >
-                <div className="text-6xl mb-4">
-                  {matched.length === cards.length ? '🎉' : '⏱️'}
-                </div>
-                <h3 className="text-2xl font-bold mb-2">
-                  {matched.length === cards.length ? 'Победа!' : 'Время вышло!'}
-                </h3>
-                <p className="text-slate-600 mb-1">Счёт: {score}</p>
-                <p className="text-slate-600 mb-4">Ходов: {moves}</p>
-                
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => {
-                      window.location.reload();
-                    }}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600"
-                  >
-                    Играть снова
-                  </Button>
-                  <Button
-                    onClick={onClose}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Закрыть
-                  </Button>
-                </div>
-              </motion.div>
+              <Trophy className="w-20 h-20 text-yellow-400 mb-4 drop-shadow-lg" />
+              <h3 className="text-3xl font-bold text-slate-800 mb-2">Победа! 🎉</h3>
+              <p className="text-slate-600 mb-6">
+                Ты нашел все пары за {moves} ходов!
+              </p>
+              
+              <div className="flex items-center gap-2 mb-8 bg-amber-100 px-4 py-2 rounded-full text-amber-700 font-bold">
+                <span>+20</span> 🪙 Монет
+              </div>
+
+              <div className="flex gap-3 w-full">
+                <Button 
+                  onClick={initializeGame} 
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-6"
+                >
+                  <RefreshCw className="w-5 h-5 mr-2" />
+                  Играть снова
+                </Button>
+                <Button 
+                  onClick={onClose}
+                  variant="outline" 
+                  className="flex-1 border-2 rounded-xl py-6"
+                >
+                  Выйти
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };

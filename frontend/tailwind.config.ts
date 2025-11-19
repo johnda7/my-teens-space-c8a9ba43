@@ -72,6 +72,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Telegram Theme Colors
+        tg: {
+          bg: "var(--tg-bg)",
+          text: "var(--tg-text)",
+          hint: "var(--tg-hint)",
+          link: "var(--tg-link)",
+          button: "var(--tg-button)",
+          "button-text": "var(--tg-button-text)",
+          "secondary-bg": "var(--tg-secondary-bg)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

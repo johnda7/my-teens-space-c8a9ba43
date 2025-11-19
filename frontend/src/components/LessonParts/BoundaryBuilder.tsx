@@ -38,23 +38,32 @@ export const BoundaryBuilder: React.FC<BoundaryBuilderProps> = ({ question, onAn
 
   return (
     <div className="p-4">
-      <h3 className="text-lg font-bold mb-2">{question.title}</h3>
-      <p className="mb-4">{question.instruction}</p>
+      <h3 className="text-lg font-bold mb-2 text-slate-900">{question.title}</h3>
+      <p className="mb-6 text-slate-600">{question.instruction}</p>
       
-      <div className="mb-4">
-        <Progress value={strength} className="w-full" />
-        <p className="text-center text-sm mt-1">Прочность стены: {strength}</p>
+      <div className="mb-6 bg-white/50 p-4 rounded-2xl border border-white/20 shadow-sm backdrop-blur-sm">
+        <div className="flex justify-between mb-2 text-sm font-bold">
+          <span className="text-purple-600">Прочность стены</span>
+          <span className="text-slate-900">{strength}%</span>
+        </div>
+        <Progress 
+          value={strength} 
+          className="w-full h-3 bg-slate-200 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500" 
+        />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         {question.bricks?.map(brick => (
           <motion.div
             key={brick.text}
             onClick={() => handleBrickClick(brick.text)}
-            className={`p-2 rounded-md text-center cursor-pointer border ${
-              selectedBricks.includes(brick.text) ? 'bg-purple-200 border-purple-500' : 'bg-gray-100'
+            className={`p-4 rounded-xl text-center cursor-pointer border transition-all font-medium ${
+              selectedBricks.includes(brick.text) 
+                ? 'bg-purple-100 border-purple-500 text-purple-900 shadow-md' 
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-purple-200'
             }`}
             whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
           >
             {brick.text}
           </motion.div>
@@ -63,8 +72,9 @@ export const BoundaryBuilder: React.FC<BoundaryBuilderProps> = ({ question, onAn
 
       <motion.button
         onClick={checkAnswer}
-        className="w-full bg-purple-500 text-white py-2 rounded-lg"
+        className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-purple-200"
         whileTap={{ scale: 0.98 }}
+        whileHover={{ filter: "brightness(1.1)" }}
       >
         Построить!
       </motion.button>
