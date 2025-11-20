@@ -113,11 +113,12 @@ const EnhancedLessonInterface = ({
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   
-  // Spring physics for smooth following
-  const springConfig = { damping: 25, stiffness: 150 };
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [15, -15]), springConfig);
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-15, 15]), springConfig);
+  // Spring physics for smooth following - увеличенные значения для более заметного эффекта
+  const springConfig = { damping: 20, stiffness: 100 };
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [30, -30]), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-30, 30]), springConfig);
   const scale = useSpring(1, springConfig);
+  const translateZ = useSpring(useTransform(mouseX, [-0.5, 0.5], [0, 50]), springConfig);
 
   // Track mouse movement
   useEffect(() => {
@@ -501,7 +502,7 @@ const EnhancedLessonInterface = ({
   <motion.div 
     ref={containerRef}
     style={{
-      perspective: 1000,
+      perspective: 2000,
       transformStyle: "preserve-3d"
     }}
     className="min-h-screen bg-slate-50/50 text-slate-900 relative overflow-hidden font-sans selection:bg-purple-200 selection:text-purple-900"
@@ -773,12 +774,18 @@ const EnhancedLessonInterface = ({
               transition={{ type: "spring", stiffness: 100, damping: 20, duration: 0.6 }}
               className="relative flex flex-col items-center justify-center min-h-[75vh] text-center px-4"
             >
-              {/* Темные неоновые градиенты */}
+              {/* Темные неоновые градиенты с усиленными 3D эффектами */}
               <motion.div
                 animate={{
                   scale: [1, 1.2, 1],
                   rotate: [0, 90, 0],
                   opacity: [0.4, 0.6, 0.4]
+                }}
+                style={{
+                  x: useTransform(mouseX, [-0.5, 0.5], [-100, 100]),
+                  y: useTransform(mouseY, [-0.5, 0.5], [-100, 100]),
+                  rotateX: useTransform(mouseY, [-0.5, 0.5], [20, -20]),
+                  rotateY: useTransform(mouseX, [-0.5, 0.5], [-20, 20])
                 }}
                 transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute -top-20 -left-20 w-80 h-80 bg-gradient-to-br from-[#5961F9]/40 via-[#EE9AE5]/30 to-[#5961F9]/20 blur-3xl rounded-full"
@@ -788,6 +795,12 @@ const EnhancedLessonInterface = ({
                   scale: [1, 1.3, 1],
                   rotate: [0, -90, 0],
                   opacity: [0.3, 0.5, 0.3]
+                }}
+                style={{
+                  x: useTransform(mouseX, [-0.5, 0.5], [100, -100]),
+                  y: useTransform(mouseY, [-0.5, 0.5], [100, -100]),
+                  rotateX: useTransform(mouseY, [-0.5, 0.5], [-20, 20]),
+                  rotateY: useTransform(mouseX, [-0.5, 0.5], [20, -20])
                 }}
                 transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-[#40C9FF]/30 via-[#5961F9]/40 to-[#EE9AE5]/20 blur-3xl rounded-full"
@@ -801,14 +814,25 @@ const EnhancedLessonInterface = ({
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 className="relative z-10 flex flex-col items-center space-y-8"
               >
-                {/* Катя - крупная и анимированная */}
+                {/* Катя - крупная и анимированная с 3D эффектами */}
                 <motion.div
                   animate={{
                     y: [0, -10, 0],
                     rotate: [-2, 2, -2]
                   }}
+                  style={{
+                    rotateX: useTransform(mouseY, [-0.5, 0.5], [20, -20]),
+                    rotateY: useTransform(mouseX, [-0.5, 0.5], [-20, 20]),
+                    transformStyle: "preserve-3d",
+                    transform: "translateZ(100px)"
+                  }}
+                  whileHover={{
+                    scale: 1.1,
+                    rotateZ: 5,
+                    transition: { duration: 0.3 }
+                  }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-64 h-64 md:w-72 md:h-72 drop-shadow-[0_0_30px_rgba(89,97,249,0.4)]"
+                  className="w-64 h-64 md:w-72 md:h-72 drop-shadow-[0_0_60px_rgba(89,97,249,0.6)] cursor-pointer"
                 >
                   <RiveKatya
                     mood={intro.slides?.[introSlideIndex]?.katya || 'celebrate'}
@@ -817,13 +841,19 @@ const EnhancedLessonInterface = ({
                   />
                 </motion.div>
 
-                {/* Текст с премиум-типографикой */}
+                {/* Текст с премиум-типографикой и 3D эффектами */}
                 <div className="space-y-4 max-w-lg w-full px-4">
                   <motion.h2
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      rotateX: useTransform(mouseY, [-0.5, 0.5], [10, -10]),
+                      rotateY: useTransform(mouseX, [-0.5, 0.5], [-10, 10]),
+                      transformStyle: "preserve-3d",
+                      transform: "translateZ(50px)"
+                    }}
                     transition={{ delay: 0.2 }}
-                    className="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-lg text-center"
+                    className="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] text-center"
                   >
                     {intro.slides?.[introSlideIndex]?.text?.replace('Я Катя', `Я Катя, ${userName}`) || `Привет, ${userName}! Я Катя! 💜`}
                   </motion.h2>
@@ -832,8 +862,14 @@ const EnhancedLessonInterface = ({
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
+                      style={{
+                        rotateX: useTransform(mouseY, [-0.5, 0.5], [8, -8]),
+                        rotateY: useTransform(mouseX, [-0.5, 0.5], [-8, 8]),
+                        transformStyle: "preserve-3d",
+                        transform: "translateZ(30px)"
+                      }}
                       transition={{ delay: 0.4 }}
-                      className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10"
+                      className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                     >
                       <p className="text-lg text-white font-medium leading-relaxed text-center">
                         {intro.slides[introSlideIndex].subtext}
@@ -861,15 +897,31 @@ const EnhancedLessonInterface = ({
                   ))}
                 </div>
 
-                {/* Кнопка продолжения */}
+                {/* Кнопка продолжения с 3D эффектами */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    rotateX: useTransform(mouseY, [-0.5, 0.5], [15, -15]),
+                    rotateY: useTransform(mouseX, [-0.5, 0.5], [-15, 15]),
+                    transformStyle: "preserve-3d",
+                    transform: "translateZ(40px)"
+                  }}
                   transition={{ delay: 0.3 }}
                   className="w-full mt-8"
                 >
-                  <Button
-                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] hover:brightness-110 text-white rounded-2xl shadow-xl shadow-[#EE9AE5]/30 border-0 active:scale-95 transition-transform"
+                  <motion.button
+                    whileHover={{ 
+                      scale: 1.05,
+                      rotateX: -5,
+                      rotateY: 5,
+                      boxShadow: "0 25px 50px -12px rgba(238, 154, 229, 0.5)"
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full py-6 text-lg font-bold bg-gradient-to-r from-[#5961F9] via-[#EE9AE5] to-[#F5576C] hover:brightness-110 text-white rounded-2xl shadow-xl shadow-[#EE9AE5]/30 border-0 transition-all"
+                    style={{
+                      transformStyle: "preserve-3d"
+                    }}
                     onClick={() => {
                       triggerHaptic('medium');
                       if (introSlideIndex < (intro.slides?.length || 1) - 1) {
@@ -882,7 +934,7 @@ const EnhancedLessonInterface = ({
                     }}
                   >
                     {intro.slides?.[introSlideIndex]?.action || (introSlideIndex < (intro.slides?.length || 1) - 1 ? 'Дальше ✨' : 'Погнали в миссию 🚀')}
-                  </Button>
+                  </motion.button>
                 </motion.div>
               </motion.div>
             </motion.div>
