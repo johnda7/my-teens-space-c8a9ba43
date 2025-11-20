@@ -548,7 +548,6 @@ const EnhancedLessonInterface = ({
           className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-secondary/20 via-primary/15 to-accent/10 rounded-full blur-[120px]"
         />
       </div>
-      </div>
 
       {/* Header - Glassmorphism */}
       <motion.div 
