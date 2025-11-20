@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
@@ -107,6 +107,34 @@ const EnhancedLessonInterface = ({
   const [userName, setUserName] = useState<string>('друг');
   const [currentEmotion, setCurrentEmotion] = useState('😊');
   const [showEmotionPicker, setShowEmotionPicker] = useState(false);
+
+  // Advanced 3D mouse tracking
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  // Spring physics for smooth following
+  const springConfig = { damping: 25, stiffness: 150 };
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [15, -15]), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-15, 15]), springConfig);
+  const scale = useSpring(1, springConfig);
+
+  // Track mouse movement
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+      const y = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+      
+      mouseX.set(x);
+      mouseY.set(y);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
   const [dailyChallenge, setDailyChallenge] = useState({
     type: 'perfect-score',
     progress: 0,
@@ -470,7 +498,14 @@ const EnhancedLessonInterface = ({
   };
 
   return (
-  <div className="min-h-screen bg-slate-50/50 text-slate-900 relative overflow-hidden font-sans selection:bg-purple-200 selection:text-purple-900">
+  <motion.div 
+    ref={containerRef}
+    style={{
+      perspective: 1000,
+      transformStyle: "preserve-3d"
+    }}
+    className="min-h-screen bg-slate-50/50 text-slate-900 relative overflow-hidden font-sans selection:bg-purple-200 selection:text-purple-900"
+  >
       {/* Glassmorphism Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <motion.div
@@ -480,8 +515,12 @@ const EnhancedLessonInterface = ({
             x: [0, 30, 0],
             y: [0, -30, 0],
           }}
+          style={{
+            x: useTransform(mouseX, [-0.5, 0.5], [-30, 30]),
+            y: useTransform(mouseY, [-0.5, 0.5], [-30, 30])
+          }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-300/20 rounded-full blur-[100px]"
+          className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/10 rounded-full blur-[100px]"
         />
         <motion.div
           animate={{
@@ -490,17 +529,25 @@ const EnhancedLessonInterface = ({
             x: [0, -40, 0],
             y: [0, 40, 0],
           }}
+          style={{
+            x: useTransform(mouseX, [-0.5, 0.5], [40, -40]),
+            y: useTransform(mouseY, [-0.5, 0.5], [40, -40])
+          }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-300/20 rounded-full blur-[100px]"
+          className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-gradient-to-tl from-accent/20 via-primary/15 to-secondary/10 rounded-full blur-[100px]"
         />
         <motion.div
           animate={{
             opacity: [0.2, 0.4, 0.2],
             rotate: [0, 180, 360],
           }}
+          style={{
+            scale: useSpring(useTransform(mouseX, [-0.5, 0.5], [0.9, 1.1]), springConfig)
+          }}
           transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-pink-300/20 rounded-full blur-[120px]"
+          className="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-secondary/20 via-primary/15 to-accent/10 rounded-full blur-[120px]"
         />
+      </div>
       </div>
 
       {/* Header - Glassmorphism */}
@@ -935,6 +982,12 @@ const EnhancedLessonInterface = ({
                 y: [0, -8, 0],
                 rotate: [-1, 1, -1]
               }}
+              style={{
+                rotateX: useTransform(mouseY, [-0.5, 0.5], [-5, 5]),
+                rotateY: useTransform(mouseX, [-0.5, 0.5], [5, -5]),
+                transformStyle: "preserve-3d",
+                transform: "translateZ(80px)"
+              }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
               {/* Частицы вокруг Кати */}
@@ -946,12 +999,27 @@ const EnhancedLessonInterface = ({
                     opacity: [1, 0],
                     scale: [0, 1.5],
                     x: particle.x,
-                    y: particle.y
+                    y: particle.y,
+                    rotate: [0, 360]
                   }}
-                  transition={{ duration: 2, ease: "easeOut" }}
+                  transition={{ 
+                    duration: 2, 
+                    ease: "easeOut",
+                    rotate: { duration: 2, ease: "linear" }
+                  }}
+                  style={{
+                    transformStyle: "preserve-3d"
+                  }}
                   className="absolute top-1/2 left-1/2 pointer-events-none"
                 >
-                  <Sparkles className="w-5 h-5 text-pink-500" />
+                  <motion.div
+                    animate={{
+                      rotateZ: [0, 360]
+                    }}
+                    transition={{ duration: 2, ease: "linear" }}
+                  >
+                    <Sparkles className="w-5 h-5 text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
+                  </motion.div>
                 </motion.div>
               ))}
               
@@ -969,14 +1037,22 @@ const EnhancedLessonInterface = ({
               
               {/* Voice button для Кати - REMOVED as per user request */}
               
-              <div className="relative w-44 h-44 md:w-56 md:h-56 drop-shadow-[0_15px_60px_rgba(139,92,246,0.5)]">
+              <motion.div 
+                style={{
+                  rotateX: useTransform(mouseY, [-0.5, 0.5], [-5, 5]),
+                  rotateY: useTransform(mouseX, [-0.5, 0.5], [5, -5]),
+                  transformStyle: "preserve-3d",
+                  transform: "translateZ(100px)"
+                }}
+                className="relative w-44 h-44 md:w-56 md:h-56 drop-shadow-[0_15px_60px_rgba(139,92,246,0.5)]"
+              >
                 <RiveKatya
                   mood={katyaMood}
                   message={katyaMessage}
                   showBubble={true}
                   className="mx-auto"
                 />
-              </div>
+              </motion.div>
             </motion.div>
 
             {/* Question Progress Indicator */}
@@ -1004,6 +1080,16 @@ const EnhancedLessonInterface = ({
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
+              style={{
+                rotateX,
+                rotateY,
+                scale,
+                transformStyle: "preserve-3d",
+                transform: "translateZ(50px)"
+              }}
+              whileHover={{ scale: 1.02 }}
+              onHoverStart={() => scale.set(1.02)}
+              onHoverEnd={() => scale.set(1)}
               className="relative overflow-hidden rounded-3xl bg-white/60 backdrop-blur-[20px] border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)] px-6 pt-6 pb-7 mb-4"
             >
               {/* Светлые анимированные градиенты */}
@@ -1134,8 +1220,17 @@ const EnhancedLessonInterface = ({
                       initial={{ x: -50, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.03, x: 8 }}
+                      whileHover={{ 
+                        scale: 1.03, 
+                        x: 8,
+                        rotateY: 5,
+                        rotateX: -2
+                      }}
                       whileTap={{ scale: 0.97 }}
+                      style={{
+                        transformStyle: "preserve-3d",
+                        transform: "translateZ(20px)"
+                      }}
                       onClick={() => {
                         triggerHaptic('light');
                         handleAnswer(option);
@@ -1148,6 +1243,9 @@ const EnhancedLessonInterface = ({
                         initial={{ opacity: 0 }}
                         whileHover={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
+                        style={{
+                          transform: "translateZ(10px)"
+                        }}
                         className="absolute inset-0 bg-gradient-to-r from-purple-100/50 via-pink-100/50 to-rose-100/50"
                       />
                       
@@ -1159,12 +1257,19 @@ const EnhancedLessonInterface = ({
                           scale: [0.8, 1.2, 1.4]
                         }}
                         transition={{ duration: 1.5, repeat: Infinity }}
+                        style={{
+                          transform: "translateZ(5px)"
+                        }}
                         className="absolute inset-0 border border-purple-200 rounded-2xl"
                       />
                       
-                      <div className="relative flex items-center gap-4">
+                      <div className="relative flex items-center gap-4" style={{ transform: "translateZ(30px)" }}>
                         <motion.span
-                          whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                          whileHover={{ 
+                            rotate: [0, -10, 10, 0], 
+                            scale: 1.1,
+                            z: 10
+                          }}
                           transition={{ duration: 0.5 }}
                           className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-[15px] font-black text-white shadow-md"
                         >
@@ -1473,7 +1578,7 @@ const EnhancedLessonInterface = ({
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
